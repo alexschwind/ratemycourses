@@ -6,6 +6,9 @@ from django.views.generic.base import TemplateView
 from courses import views as cviews
 
 urlpatterns = [
+    # Custom admin views must come before admin.site.urls
+    path("admin/courses/upload-csv/", cviews.upload_courses_csv, name="upload_courses_csv"),
+    
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path("accounts/profile/", TemplateView.as_view(template_name="profile.html"), name="profile"),

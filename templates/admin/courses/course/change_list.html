@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+    <li>
+        <a href="{% url 'upload_courses_csv' %}" class="addlink">
+            📁 Upload Courses CSV
+        </a>
+    </li>
+    {{ block.super }}
+{% endblock %}

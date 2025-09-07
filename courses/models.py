@@ -53,8 +53,8 @@ class Rating(models.Model):
 
     class Meta:
         constraints = [
-            # one rating per user per course per term
-            UniqueConstraint(fields=["course", "user", "year", "semester"], name="uniq_user_course_term"),
+            # one rating per user per course (regardless of term)
+            UniqueConstraint(fields=["course", "user"], name="uniq_user_course"),
             # enforce rating bounds at DB layer too
             CheckConstraint(check=Q(rating__gte=1, rating__lte=5), name="rating_between_1_5"),
         ]

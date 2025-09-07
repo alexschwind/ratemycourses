@@ -1,23 +1,24 @@
 services:
   django:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000 --settings=ratemycourses.settings_local
     volumes:
       - .:/app
     ports:
       - 8000:8000
     environment:
-      - DEBUG=${DEBUG}
-      - SECRET_KEY=${SECRET_KEY}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-local-development-key-change-in-production
+      - POSTGRES_DB=ratemycourses
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_HOST=postgres
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
-      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
-      - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - MAILGUN_API_KEY=
+      - MAILGUN_DOMAIN=
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
   
   postgres:
@@ -25,15 +26,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=ratemycourses
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ratemycourses"]
-      interval: 1m30s
-      timeout: 30s
+      interval: 10s
+      timeout: 5s
       retries: 5
     restart: unless-stopped
+    ports:
+      - "5432:5432"
 
 volumes:
   postgres_data:

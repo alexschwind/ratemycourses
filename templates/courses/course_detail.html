@@ -10,7 +10,11 @@
 </p>
 
 {% if user.is_authenticated %}
-  <p><a href="{% url 'rate_course' course.slug %}">Rate this course</a></p>
+  {% if user_has_rated %}
+    <p><a href="{% url 'rate_course' course.slug %}">Edit your rating</a></p>
+  {% else %}
+    <p><a href="{% url 'rate_course' course.slug %}">Rate this course</a></p>
+  {% endif %}
 {% else %}
   <p><a href="{% url 'account_login' %}">Log in</a> to rate.</p>
 {% endif %}

@@ -1,20 +1,40 @@
 services:
-  # traefik:
-  #   image: traefik
-  #   depends_on:
-  #     - django
-  #   ports:
-  #     - '0.0.0.0:80:80'
-  #     - '0.0.0.0:443:443'
-  django:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000 # gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app
-    volumes:
-      - .:/app
+  traefik:
+    image: traefik
+    command:
+      - "--accesslog=true"
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=info@ratemycourses.de"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entryPoints.web.forwardedHeaders.insecure"
+      - "--entryPoints.websecure.forwardedHeaders.insecure"
     ports:
-      - 8000:8000
+      - "80:80"
+      - "443:443"
+    volumes:
+      - letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+  watchtower:
+    image: containrrr/watchtower
+    command: >
+      --interval 300          # check every 5 minutes
+      --cleanup               # remove old images after update
+      --label-enable
+      --rolling-restart       # restart one-by-one if multiple replicas (safe anyway)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+  django:
+    image: ghcr.io/alexschwind/ratemycourses:latest
+    command: gunicorn ratemycourses.wsgi:application --bind 0.0.0.0:5000 --workers 3
     environment:
-      - DEBUG=${DEBUG}
+      - DEBUG=False
       - SECRET_KEY=${SECRET_KEY}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -24,6 +44,25 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.django-ratelimit.ratelimit.average=20"
+      - "traefik.http.routers.django.rule=Host(`ratemycourses.de`) && !Method(`POST`)"
+      - "traefik.http.routers.django.entrypoints=websecure"
+      - "traefik.http.routers.django.tls.certresolver=myresolver"
+      - "traefik.http.routers.django.middlewares=django-ratelimit"
+      # Define separate router for POST methods
+      - "traefik.http.middlewares.django-ratelimit-post.ratelimit.average=1"
+      - "traefik.http.middlewares.django-ratelimit-post.ratelimit.period=1m"
+      - "traefik.http.routers.django-post.rule=Host(`ratemycourses.de`) && Method(`POST`)"
+      - "traefik.http.routers.django-post.middlewares=django-ratelimit-post"
+      - "traefik.http.routers.django-post.entrypoints=websecure"
+      - "traefik.http.routers.django-post.tls.certresolver=myresolver"
+        # Enable watchtower
+      - "com.centurylinklabs.watchtower.enable=true"
   
   postgres:
     image: postgres:15
@@ -38,6 +77,8 @@ services:
       interval: 1m30s
       timeout: 30s
       retries: 5
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  letsencrypt:

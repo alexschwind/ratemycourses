@@ -22,11 +22,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
   watchtower:
     image: containrrr/watchtower
-    command: >
-      --interval 300          # check every 5 minutes
-      --cleanup               # remove old images after update
-      --label-enable
-      --rolling-restart       # restart one-by-one if multiple replicas (safe anyway)
+    command:
+      - "--interval"
+      - "30"
+      - "--cleanup"            # remove old images after update
+      - "--label-enable"
+      - "--rolling-restart"       # restart one-by-one if multiple replicas (safe anyway)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped

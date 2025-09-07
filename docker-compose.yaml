@@ -57,6 +57,7 @@ services:
       retries: 5
     labels:
       - "traefik.enable=true"
+      # Rate limiting
       - "traefik.http.middlewares.django-ratelimit.ratelimit.average=20"
       - "traefik.http.routers.django.rule=Host(`ratemycourses.de`) && !Method(`POST`)"
       - "traefik.http.routers.django.entrypoints=websecure"
@@ -69,7 +70,12 @@ services:
       - "traefik.http.routers.django-post.middlewares=django-ratelimit-post"
       - "traefik.http.routers.django-post.entrypoints=websecure"
       - "traefik.http.routers.django-post.tls.certresolver=myresolver"
-        # Enable watchtower
+      # Rate limiting for static files
+      - "traefik.http.routers.django-static.rule=Host(`ratemycourses.de`) && PathPrefix(`/static`)"
+      - "traefik.http.routers.django-static.entrypoints=websecure"
+      - "traefik.http.routers.django-static.tls.certresolver=myresolver"
+      - "traefik.http.routers.django-static.priority=1000"
+      # Enable watchtower
       - "com.centurylinklabs.watchtower.enable=true"
   
   postgres:

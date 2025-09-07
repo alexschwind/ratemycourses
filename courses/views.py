@@ -8,7 +8,7 @@ from .forms import RatingForm
 from django.db.models import Avg, Count, Value
 from django.db.models.functions import Coalesce
 
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 from .models import Course
 
 class CourseListView(ListView):
@@ -87,3 +87,9 @@ def add_rating(request, slug):
         form = RatingForm()
 
     return render(request, "courses/rate_course.html", {"course": course, "form": form})
+
+class ImpressumView(TemplateView):
+    template_name = "impressum.html"
+
+class PrivacyView(TemplateView):
+    template_name = "privacy.html"

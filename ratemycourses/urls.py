@@ -4,6 +4,7 @@ from django.urls import path, include
 from django.views.generic.base import TemplateView
 
 from courses import views as cviews
+from courses.views import ImpressumView, PrivacyView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,4 +15,8 @@ urlpatterns = [
 
     path("courses/<slug:slug>/", cviews.course_detail, name="course_detail"),
     path("courses/<slug:slug>/rate/", cviews.add_rating, name="rate_course"),
+    
+    # Legal pages
+    path("impressum/", ImpressumView.as_view(), name="impressum"),
+    path("privacy/", PrivacyView.as_view(), name="privacy"),
 ]

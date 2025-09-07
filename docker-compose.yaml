@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
   django:
     image: ghcr.io/alexschwind/ratemycourses:latest
-    command: gunicorn ratemycourses.wsgi:application --bind 0.0.0.0:8080 --workers 3
+    command: gunicorn ratemycourses.wsgi:application --bind 0.0.0.0:8000 --workers 3
     environment:
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY}

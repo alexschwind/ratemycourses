@@ -14,6 +14,8 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_HOST=postgres
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
+      - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
     depends_on:
       - postgres
     restart: unless-stopped

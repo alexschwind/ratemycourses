@@ -19,6 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=djangouser:django . .
 
+RUN mkdir -p /app/staticfiles && chown -R djangouser:django /app
+
 USER djangouser
 
 EXPOSE 8000

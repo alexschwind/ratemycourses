@@ -50,6 +50,11 @@ services:
     deploy:
       mode: replicated
       replicas: 3
+    healthcheck:
+      test: ["CMD-SHELL","python manage.py check --deploy || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     labels:
       - "traefik.enable=true"
       - "traefik.http.middlewares.django-ratelimit.ratelimit.average=20"

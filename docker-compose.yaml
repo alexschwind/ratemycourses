@@ -1,0 +1,43 @@
+services:
+  # traefik:
+  #   image: traefik
+  #   depends_on:
+  #     - django
+  #   ports:
+  #     - '0.0.0.0:80:80'
+  #     - '0.0.0.0:443:443'
+  django:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000 # gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    environment:
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=postgres
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+    depends_on:
+      - postgres
+    restart: unless-stopped
+  
+  postgres:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=ratemycourses
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ratemycourses"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+
+volumes:
+  postgres_data:

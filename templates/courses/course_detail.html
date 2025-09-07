@@ -1,0 +1,30 @@
+{% extends "allauth/layouts/base.html" %}
+{% block title %}{{course.name}}{% endblock %}
+{% block content %}
+<h1>{{ course.name }}</h1>
+<p>
+  Average rating:
+  {% if count %} {{ avg|floatformat:1 }} / 5 ({{ count }} ratings)
+  {% else %} No ratings yet
+  {% endif %}
+</p>
+
+{% if user.is_authenticated %}
+  <p><a href="{% url 'rate_course' course.slug %}">Rate this course</a></p>
+{% else %}
+  <p><a href="{% url 'account_login' %}">Log in</a> to rate.</p>
+{% endif %}
+
+<hr/>
+
+{% for r in ratings %}
+  <div>
+    <strong>{{ r.rating }}/5</strong> · {{ r.year }} {{ r.semester }}
+    {% if r.comment %}<br><em>{{ r.comment|linebreaksbr }}</em>{% endif %}
+    <br><small>Posted {{ r.created_at|date:"Y-m-d" }}</small>
+  </div>
+  <hr/>
+{% empty %}
+  <p>No reviews yet.</p>
+{% endfor %}
+{% endblock %}

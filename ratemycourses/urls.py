@@ -1,0 +1,17 @@
+from django.contrib import admin
+from django.urls import path, include
+
+from django.views.generic.base import TemplateView
+
+from courses import views as cviews
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
+    path("accounts/profile/", TemplateView.as_view(template_name="profile.html"), name="profile"),
+    
+    path("", cviews.CourseListView.as_view(), name="home"),
+
+    path("courses/<slug:slug>/", cviews.course_detail, name="course_detail"),
+    path("courses/<slug:slug>/rate/", cviews.add_rating, name="rate_course"),
+]

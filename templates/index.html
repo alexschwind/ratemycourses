@@ -1,0 +1,84 @@
+{% extends "allauth/layouts/base.html" %}
+{% block title %}Example Project{% endblock %}
+{% block content %}
+    <hgroup>
+        <h1>Courses</h1>
+        <p>Welcome to the TU Berlin course ratings project.</p> 
+    </hgroup>
+    <hr>
+    <p>Here you can check what courses are actually good and what other students think about it. You can log in with your tu email address to write your own ratings.</p>
+
+    <form method="get" action="" role="search">
+        <input
+        type="search"
+        name="q"
+        placeholder="Search courses…"
+        value="{{ q }}"
+        aria-label="Search courses"
+        />
+        <select name="sort" aria-label="Sort courses">
+        <option value="name" {% if sort == "name" %}selected{% endif %}>Name (A→Z)</option>
+        <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
+        <option value="rating_asc" {% if sort == "rating_asc" %}selected{% endif %}>Lowest rated</option>
+        </select>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if page_obj.paginator.count %}
+        <p>
+        {% if q %}Results for “{{ q }}”. {% endif %}
+        {{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }}
+        </p>
+    {% endif %}
+
+    {% if courses %}
+        <table>
+        <thead>
+            <tr>
+            <th style="text-align:left;">Course</th>
+            <th style="text-align:center;">Average rating</th>
+            <th style="text-align:center;"># Ratings</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for course in courses %}
+            <tr>
+                <td>
+                <a href="{% url 'course_detail' course.slug %}">{{ course.name }}</a>
+                </td>
+                <td style="text-align:center;">
+                {% if course.rating_count %}
+                    {{ course.avg_rating|floatformat:1 }} / 5
+                {% else %}
+                    —
+                {% endif %}
+                </td>
+                <td style="text-align:center;">
+                {{ course.rating_count }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    {% else %}
+        <p>No courses found.</p>
+    {% endif %}
+
+    {% if is_paginated %}
+        <nav aria-label="Pagination" style="margin-top:1rem;">
+        <ul style="list-style:none; padding:0; display:flex; gap:.5rem;">
+            {% if page_obj.has_previous %}
+            <li>
+                <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">« Prev</a>
+            </li>
+            {% endif %}
+            <li>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</li>
+            {% if page_obj.has_next %}
+            <li>
+                <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Next »</a>
+            </li>
+            {% endif %}
+        </ul>
+        </nav>
+    {% endif %}
+{% endblock %}

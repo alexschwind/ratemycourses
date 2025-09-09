@@ -44,6 +44,10 @@ services:
       - POSTGRES_HOST=postgres
       - MAILGUN_API_KEY=${MAILGUN_API_KEY}
       - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
+      - OWNER_NAME=${OWNER_NAME}
+      - OWNER_ADDRESS=${OWNER_ADDRESS}
+      - OWNER_CITY=${OWNER_CITY}
+      - OWNER_EMAIL=${OWNER_EMAIL}
     depends_on:
       - postgres
     restart: unless-stopped

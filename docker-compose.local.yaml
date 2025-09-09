@@ -16,6 +16,10 @@ services:
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
       - MAILGUN_API_KEY=
       - MAILGUN_DOMAIN=
+      - OWNER_NAME=
+      - OWNER_ADDRESS=
+      - OWNER_CITY=
+      - OWNER_EMAIL=
     depends_on:
       postgres:
         condition: service_healthy

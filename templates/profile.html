@@ -2,6 +2,19 @@
 {% load allauth %}
 {% block title %}Profile{% endblock %}
 {% block content %}
+<main class="container">
     <h1>Profile</h1>
     <p>Your profile</p>
+    
+    <article>
+        <header>
+            <h2>My Activity</h2>
+        </header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'my_ratings' %}">View My Ratings</a> - See and manage all your course ratings</li>
+            </ul>
+        </nav>
+    </article>
+</main>
 {% endblock content %}

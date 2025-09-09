@@ -22,6 +22,12 @@
                 </ul>
                 <ul>
                     {% if user.is_authenticated %}
+                        <li>
+                            <a href="{% url 'profile' %}">{% trans "Profile" %}</a>
+                        </li>
+                        <li>
+                            <a href="{% url 'my_ratings' %}">{% trans "My Ratings" %}</a>
+                        </li>
                         {% url 'account_change_password' as change_password_url_ %}
                         {% if change_password_url_ %}
                             <li>
@@ -67,7 +73,7 @@
         <footer class="container-fluid" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--pico-muted-border-color);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
-                    <small>&copy; {% now "Y" %} RateMyCourses. All rights reserved.</small>
+                    <small>&copy; {% now "Y" %} RateMyCourses. With ❤️ from TU Berlin.</small>
                 </div>
                 <nav>
                     <ul style="display: flex; gap: 1rem; margin: 0; list-style: none;">

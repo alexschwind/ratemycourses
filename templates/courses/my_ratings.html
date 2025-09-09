@@ -1,0 +1,65 @@
+{% extends "allauth/layouts/base.html" %}
+{% block title %}My Ratings{% endblock %}
+{% block content %}
+<main class="container">
+    <nav>
+        <ul>
+            <li><a href="{% url 'home' %}">← Back to all courses</a></li>
+        </ul>
+    </nav>
+    
+    <h1>My Ratings</h1>
+    
+    {% if ratings %}
+        <p>You have rated {{ ratings|length }} course{{ ratings|length|pluralize }}.</p>
+        
+        {% for rating in ratings %}
+        <article>
+            <header>
+                <hgroup>
+                    <h3>
+                        <a href="{% url 'course_detail' rating.course.slug %}">
+                            {{ rating.course.name }}
+                        </a>
+                    </h3>
+                    <p>
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= rating.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                        {{ rating.rating }}/5
+                    </p>
+                </hgroup>
+            </header>
+            
+            <p>
+                <strong>{{ rating.year }} {{ rating.get_semester_display }}</strong> • 
+                Posted {{ rating.created_at|date:"F j, Y" }}
+                {% if rating.updated_at != rating.created_at %}
+                    • Updated {{ rating.updated_at|date:"F j, Y" }}
+                {% endif %}
+            </p>
+            
+            {% if rating.comment %}
+            <blockquote>{{ rating.comment }}</blockquote>
+            {% endif %}
+            
+            <footer>
+                <a href="{% url 'edit_rating' rating.id %}" role="button">Edit</a>
+                <a href="{% url 'delete_rating' rating.id %}" role="button" class="secondary">Delete</a>
+                <a href="{% url 'course_detail' rating.course.slug %}" role="button" class="outline">View Course</a>
+            </footer>
+        </article>
+        {% endfor %}
+    {% else %}
+        <article>
+            <header>
+                <hgroup>
+                    <h3>No ratings yet</h3>
+                    <p>You haven't rated any courses yet.</p>
+                </hgroup>
+            </header>
+            <p><a href="{% url 'home' %}">Browse courses</a> to get started!</p>
+        </article>
+    {% endif %}
+</main>
+{% endblock %}

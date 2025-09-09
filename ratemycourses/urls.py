@@ -18,6 +18,11 @@ urlpatterns = [
     path("courses/<slug:slug>/", cviews.course_detail, name="course_detail"),
     path("courses/<slug:slug>/rate/", cviews.add_rating, name="rate_course"),
     
+    # User rating management
+    path("my-ratings/", cviews.my_ratings, name="my_ratings"),
+    path("ratings/<int:rating_id>/edit/", cviews.edit_rating, name="edit_rating"),
+    path("ratings/<int:rating_id>/delete/", cviews.delete_rating, name="delete_rating"),
+    
     # Legal pages
     path("impressum/", cviews.ImpressumView.as_view(), name="impressum"),
     path("privacy/", cviews.PrivacyView.as_view(), name="privacy"),

@@ -1,0 +1,157 @@
+{% extends "allauth/layouts/base.html" %}
+{% block title %}Edit Rating - {{course.name}}{% endblock %}
+{% block extra_head %}
+<style>
+/* Star Rating Styles */
+.star-rating-container {
+    margin: 1rem 0;
+}
+
+.star-rating .stars {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.star-rating .star {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    user-select: none;
+}
+
+.star-rating .star:hover,
+.star-rating .star.active {
+    color: #ffc107;
+}
+
+.star-rating .star:hover ~ .star {
+    color: #ddd;
+}
+
+.rating-text {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.rating-value {
+    font-weight: bold;
+    color: #333;
+}
+
+.rating-input {
+    display: none !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const starRating = document.querySelector('.star-rating');
+    if (!starRating) return;
+    
+    const stars = starRating.querySelectorAll('.star');
+    const hiddenInput = starRating.parentElement.querySelector('.rating-input');
+    const ratingValue = starRating.querySelector('.rating-value');
+    const currentRating = parseInt(starRating.dataset.rating) || 0;
+    
+    // Set initial state
+    updateStars(currentRating);
+    
+    stars.forEach((star, index) => {
+        star.addEventListener('click', function() {
+            const value = parseInt(this.dataset.value);
+            updateStars(value);
+            hiddenInput.value = value;
+            ratingValue.textContent = value;
+        });
+        
+        star.addEventListener('mouseenter', function() {
+            const value = parseInt(this.dataset.value);
+            updateStars(value);
+        });
+    });
+    
+    starRating.addEventListener('mouseleave', function() {
+        const currentValue = parseInt(hiddenInput.value) || 0;
+        updateStars(currentValue);
+    });
+    
+    function updateStars(rating) {
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<main class="container">
+    <nav>
+        <ul>
+            <li><a href="{% url 'my_ratings' %}">← Back to my ratings</a></li>
+        </ul>
+    </nav>
+    
+    <h1>Edit Rating: {{ course.name }}</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <label for="{{ form.rating.id_for_label }}">Rating:</label>
+        <div class="star-rating-container">
+            <div class="star-rating" data-rating="{{ form.rating.value|default:0 }}">
+                <div class="stars">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+                <div class="rating-text">
+                    <span class="rating-value">{{ form.rating.value|default:0 }}</span>/5
+                </div>
+            </div>
+            {{ form.rating }}
+        </div>
+        {% if form.rating.errors %}
+            <small>{{ form.rating.errors }}</small>
+        {% endif %}
+        
+        <label for="{{ form.comment.id_for_label }}">Comment:</label>
+        {{ form.comment }}
+        {% if form.comment.errors %}
+            <small>{{ form.comment.errors }}</small>
+        {% endif %}
+        
+        <label for="{{ form.year.id_for_label }}">Year:</label>
+        {{ form.year }}
+        {% if form.year.errors %}
+            <small>{{ form.year.errors }}</small>
+        {% endif %}
+        
+        <label for="{{ form.semester.id_for_label }}">Semester:</label>
+        {{ form.semester }}
+        {% if form.semester.errors %}
+            <small>{{ form.semester.errors }}</small>
+        {% endif %}
+        
+        <button type="submit">Update Rating</button>
+    </form>
+    
+    <nav>
+        <ul>
+            <li><a href="{% url 'my_ratings' %}">Cancel</a></li>
+            <li><a href="{% url 'course_detail' course.slug %}">View Course</a></li>
+        </ul>
+    </nav>
+  </main>
+  {% endblock %}

@@ -1,0 +1,43 @@
+{% extends "allauth/layouts/base.html" %}
+{% block title %}Delete Rating - {{rating.course.name}}{% endblock %}
+{% block content %}
+<main class="container">
+    <nav>
+        <ul>
+            <li><a href="{% url 'my_ratings' %}">← Back to my ratings</a></li>
+        </ul>
+    </nav>
+    
+    <h1>Delete Rating</h1>
+    
+    <article>
+        <header>
+            <hgroup>
+                <h2>Warning</h2>
+                <p>This action cannot be undone. Are you sure you want to delete your rating for this course?</p>
+            </hgroup>
+        </header>
+        
+        <h3>{{ rating.course.name }}</h3>
+        <p>
+            {% for i in "12345" %}
+                {% if forloop.counter <= rating.rating %}★{% else %}☆{% endif %}
+            {% endfor %}
+            {{ rating.rating }}/5
+        </p>
+        <p>
+            <strong>{{ rating.year }} {{ rating.get_semester_display }}</strong> • 
+            Posted {{ rating.created_at|date:"F j, Y" }}
+        </p>
+        {% if rating.comment %}
+        <blockquote>{{ rating.comment }}</blockquote>
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="contrast">Yes, Delete Rating</button>
+            <a href="{% url 'my_ratings' %}" role="button" class="secondary">Cancel</a>
+        </form>
+    </article>
+</main>
+{% endblock %}

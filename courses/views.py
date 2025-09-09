@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import JsonResponse
 from .models import Course, Rating
 from .forms import RatingForm, CourseCSVUploadForm
 from django.db.models import Avg, Count, Value
@@ -233,3 +234,60 @@ def upload_courses_csv(request):
         form = CourseCSVUploadForm()
     
     return render(request, 'courses/upload_courses_csv.html', {'form': form})
+
+
+@login_required
+def my_ratings(request):
+    """View to display all ratings by the current user"""
+    ratings = Rating.objects.filter(user=request.user).select_related('course').order_by('-created_at')
+    
+    return render(request, 'courses/my_ratings.html', {
+        'ratings': ratings
+    })
+
+
+@login_required
+def edit_rating(request, rating_id):
+    """View to edit an existing rating"""
+    rating = get_object_or_404(Rating, id=rating_id, user=request.user)
+    
+    if request.method == "POST":
+        form = RatingForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            rating.rating = data["rating"]
+            rating.comment = data["comment"]
+            rating.year = data["year"]
+            rating.semester = data["semester"]
+            rating.save()
+            messages.success(request, "Your rating has been updated.")
+            return redirect("my_ratings")
+    else:
+        form = RatingForm(initial={
+            'rating': rating.rating,
+            'comment': rating.comment,
+            'year': rating.year,
+            'semester': rating.semester,
+        })
+    
+    return render(request, 'courses/edit_rating.html', {
+        'form': form,
+        'rating': rating,
+        'course': rating.course
+    })
+
+
+@login_required
+def delete_rating(request, rating_id):
+    """View to delete a rating"""
+    rating = get_object_or_404(Rating, id=rating_id, user=request.user)
+    
+    if request.method == "POST":
+        course_name = rating.course.name
+        rating.delete()
+        messages.success(request, f"Your rating for '{course_name}' has been deleted.")
+        return redirect("my_ratings")
+    
+    return render(request, 'courses/delete_rating.html', {
+        'rating': rating
+    })

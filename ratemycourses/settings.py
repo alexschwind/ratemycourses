@@ -59,6 +59,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'ratemycourses.context_processors.owner_info',
             ],
         },
     },
@@ -217,3 +218,9 @@ ANYMAIL = {
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@ratemycourses.de"
 SERVER_EMAIL = "server@ratemycourses.de"
+
+# Personal information for legal pages
+OWNER_NAME = config("OWNER_NAME", default="[Ihr Name]")
+OWNER_ADDRESS = config("OWNER_ADDRESS", default="[Ihre Adresse]")
+OWNER_CITY = config("OWNER_CITY", default="[PLZ und Ort]")
+OWNER_EMAIL = config("OWNER_EMAIL", default="[ihre-email@domain.de]")

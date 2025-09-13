@@ -12,16 +12,76 @@ SEMESTER_CHOICES = [
     ("WS", "Wintersemester"),
 ]
 
+class Faculty(models.Model):
+    """Model for university faculties"""
+    name = models.CharField(max_length=255, unique=True)
+    code = models.CharField(max_length=10, unique=True, help_text="Short code for the faculty (e.g., 'CS', 'MATH')")
+    description = models.TextField(blank=True, help_text="Optional description of the faculty")
+    
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "Faculties"
+    
+    def __str__(self):
+        return self.name
+
+class Institute(models.Model):
+    """Model for institutes within faculties"""
+    name = models.CharField(max_length=255, unique=True)
+    faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE, related_name="institutes")
+    code = models.CharField(max_length=20, unique=True, help_text="Short code for the institute")
+    description = models.TextField(blank=True, help_text="Optional description of the institute")
+    
+    class Meta:
+        ordering = ["faculty__name", "name"]
+    
+    def __str__(self):
+        return f"{self.name} ({self.faculty.name})"
+
+class Fachgebiet(models.Model):
+    """Model for subject areas with associated professor"""
+    name = models.CharField(max_length=255, unique=True, help_text="Subject area name (e.g., Algorithms, Statistics)")
+    professor = models.CharField(max_length=255, help_text="Professor or instructor name")
+    institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name="fachgebiete")
+    description = models.TextField(blank=True, help_text="Optional description of the subject area")
+    
+    class Meta:
+        ordering = ["institute__faculty__name", "institute__name", "name"]
+        verbose_name_plural = "Fachgebiete"
+    
+    def __str__(self):
+        return f"{self.name} - {self.professor} ({self.institute.name})"
+
 class Course(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=300, unique=True, editable=False)
+    fachgebiet = models.ForeignKey(Fachgebiet, on_delete=models.SET_NULL, null=True, blank=True, related_name="courses")
 
     class Meta:
-        indexes = [models.Index(fields=["slug"]), models.Index(fields=["name"])]
+        indexes = [
+            models.Index(fields=["slug"]), 
+            models.Index(fields=["name"]),
+            models.Index(fields=["fachgebiet"])
+        ]
         ordering = ["name"]
 
     def __str__(self):
         return self.name
+
+    @property
+    def faculty(self):
+        """Get faculty through fachgebiet relationship"""
+        return self.fachgebiet.institute.faculty if self.fachgebiet else None
+
+    @property
+    def institute(self):
+        """Get institute through fachgebiet relationship"""
+        return self.fachgebiet.institute if self.fachgebiet else None
+
+    @property
+    def professor(self):
+        """Get professor through fachgebiet relationship"""
+        return self.fachgebiet.professor if self.fachgebiet else None
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -355,3 +415,73 @@ class RatingFlag(models.Model):
     
     def __str__(self):
         return f"Flag for {self.rating} by {self.flagged_by.username}"
+
+
+class Visitor(models.Model):
+    """Model to track website visitors and page views"""
+    
+    ip_address = models.GenericIPAddressField(help_text="Visitor's IP address")
+    user_agent = models.TextField(blank=True, help_text="Visitor's user agent string")
+    referer = models.URLField(blank=True, null=True, help_text="Referring URL")
+    path = models.CharField(max_length=500, help_text="Page path visited")
+    query_string = models.CharField(max_length=1000, blank=True, help_text="URL query parameters")
+    method = models.CharField(max_length=10, default="GET", help_text="HTTP method")
+    status_code = models.PositiveSmallIntegerField(default=200, help_text="HTTP response status code")
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, help_text="Logged in user (if any)")
+    session_key = models.CharField(max_length=40, blank=True, help_text="Django session key")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["ip_address"]),
+            models.Index(fields=["path"]),
+            models.Index(fields=["user"]),
+            models.Index(fields=["created_at", "ip_address"]),  # For daily unique visitor counts
+        ]
+        ordering = ["-created_at"]
+    
+    def __str__(self):
+        user_info = f" (user: {self.user.username})" if self.user else ""
+        return f"{self.ip_address} - {self.path}{user_info} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+    
+    @classmethod
+    def get_daily_stats(cls, days=30):
+        """Get visitor statistics for the last N days"""
+        from django.db.models import Count, Q
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=days)
+        
+        # Total page views
+        total_views = cls.objects.filter(created_at__gte=start_date).count()
+        
+        # Unique visitors (by IP)
+        unique_visitors = cls.objects.filter(
+            created_at__gte=start_date
+        ).values('ip_address').distinct().count()
+        
+        # Logged in users
+        logged_in_views = cls.objects.filter(
+            created_at__gte=start_date,
+            user__isnull=False
+        ).count()
+        
+        # Most visited pages
+        popular_pages = cls.objects.filter(
+            created_at__gte=start_date
+        ).values('path').annotate(
+            count=Count('id')
+        ).order_by('-count')[:10]
+        
+        return {
+            'total_views': total_views,
+            'unique_visitors': unique_visitors,
+            'logged_in_views': logged_in_views,
+            'popular_pages': list(popular_pages),
+            'period_days': days,
+            'start_date': start_date,
+            'end_date': end_date,
+        }

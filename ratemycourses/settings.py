@@ -45,6 +45,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
+    'courses.middleware.VisitorTrackingMiddleware',
 ]
 
 ROOT_URLCONF = 'ratemycourses.urls'

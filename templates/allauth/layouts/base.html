@@ -82,15 +82,6 @@
                         <li>
                             <a href="{% url 'profile' %}">{% trans "Profile" %}</a>
                         </li>
-                        <li>
-                            <a href="{% url 'my_ratings' %}">{% trans "My Ratings" %}</a>
-                        </li>
-                        {% url 'account_change_password' as change_password_url_ %}
-                        {% if change_password_url_ %}
-                            <li>
-                                <a href="{{ change_password_url_ }}">{% trans "Change Password" %}</a>
-                            </li>
-                        {% endif %}
                         {% url 'account_logout' as logout_url_ %}
                         {% if logout_url_ %}
                             <li>

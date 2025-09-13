@@ -1,8 +1,27 @@
 from django import forms
-from .models import Rating, SEMESTER_CHOICES, Course, UserProfile, RatingFlag
+from .models import Rating, SEMESTER_CHOICES, Course, UserProfile, RatingFlag, Faculty, Institute, Fachgebiet
 from datetime import date
 import csv
 import io
+
+class CourseForm(forms.ModelForm):
+    """Form for creating and editing courses"""
+    
+    class Meta:
+        model = Course
+        fields = ['name', 'fachgebiet']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Course name'}),
+            'fachgebiet': forms.Select(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'name': 'Course Name',
+            'fachgebiet': 'Subject Area & Professor',
+        }
+        help_texts = {
+            'name': 'Enter the full name of the course',
+            'fachgebiet': 'Select the subject area and professor (faculty and institute will be determined automatically)',
+        }
 
 class RatingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -65,7 +84,7 @@ class RatingForm(forms.ModelForm):
 class CourseCSVUploadForm(forms.Form):
     csv_file = forms.FileField(
         label="CSV File",
-        help_text="Upload a CSV file with course names. The file should have a 'name' column or the first column should contain course names.",
+        help_text="Upload a CSV file with course data. The file should have columns: 'name', 'faculty', 'institute', 'fachgebiet', 'professor' (or just 'name' for basic upload).",
         widget=forms.FileInput(attrs={'accept': '.csv'})
     )
     

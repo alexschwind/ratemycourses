@@ -172,6 +172,28 @@ details > div {
 {% block content %}
 <h1>{{ course.name }}</h1>
 
+<!-- Course Information -->
+<div class="grid" style="margin-bottom: 2rem;">
+  {% if course.faculty %}
+  <div>
+    <strong>Faculty:</strong> {{ course.faculty.name }}
+  </div>
+  {% endif %}
+  {% if course.fachgebiet %}
+  <div>
+    <strong>Subject Area:</strong> {{ course.fachgebiet.name }}
+  </div>
+  <div>
+    <strong>Professor:</strong> {{ course.fachgebiet.professor }}
+  </div>
+  {% endif %}
+  {% if course.institute %}
+  <div>
+    <strong>Institute:</strong> {{ course.institute.name }}
+  </div>
+  {% endif %}
+</div>
+
 {% if count %}
   <!-- Overall Rating -->
    <div class="grid">

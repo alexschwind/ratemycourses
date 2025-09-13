@@ -29,22 +29,62 @@
     </div>
 
     <form method="get" action="" role="search">
-        <input
-        type="search"
-        name="q"
-        placeholder="Search courses…"
-        value="{{ q }}"
-        aria-label="Search courses"
-        />
-        <select name="sort" aria-label="Sort courses">
-        <option value="name" {% if sort == "name" %}selected{% endif %}>Name (A→Z)</option>
-        <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
-        <option value="rating_asc" {% if sort == "rating_asc" %}selected{% endif %}>Lowest rated</option>
-        {% if user.is_authenticated %}
-        <option value="personal" {% if sort == "personal" %}selected{% endif %}>My Personal Rating</option>
-        {% endif %}
-        </select>
-        <button type="submit">Search</button>
+        <div class="grid">
+            <div>
+                <input
+                type="search"
+                name="q"
+                placeholder="Search courses…"
+                value="{{ q }}"
+                aria-label="Search courses"
+                />
+            </div>
+            <div>
+                <select name="faculty" aria-label="Filter by faculty">
+                    <option value="">All Faculties</option>
+                    {% for faculty in faculties %}
+                    <option value="{{ faculty }}" {% if faculty_filter == faculty %}selected{% endif %}>{{ faculty }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <select name="fachgebiet" aria-label="Filter by subject area">
+                    <option value="">All Subject Areas</option>
+                    {% for fachgebiet in fachgebiete %}
+                    <option value="{{ fachgebiet }}" {% if fachgebiet_filter == fachgebiet %}selected{% endif %}>{{ fachgebiet }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <select name="professor" aria-label="Filter by professor">
+                    <option value="">All Professors</option>
+                    {% for professor in professors %}
+                    <option value="{{ professor }}" {% if professor_filter == professor %}selected{% endif %}>{{ professor }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <select name="institut" aria-label="Filter by institute">
+                    <option value="">All Institutes</option>
+                    {% for institut in institute %}
+                    <option value="{{ institut }}" {% if institut_filter == institut %}selected{% endif %}>{{ institut }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <select name="sort" aria-label="Sort courses">
+                <option value="name" {% if sort == "name" %}selected{% endif %}>Name (A→Z)</option>
+                <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
+                <option value="rating_asc" {% if sort == "rating_asc" %}selected{% endif %}>Lowest rated</option>
+                {% if user.is_authenticated %}
+                <option value="personal" {% if sort == "personal" %}selected{% endif %}>My Personal Rating</option>
+                {% endif %}
+                </select>
+            </div>
+            <div>
+                <button type="submit">Search</button>
+            </div>
+        </div>
     </form>
 
     {% if page_obj.paginator.count %}
@@ -59,6 +99,10 @@
         <thead>
             <tr>
             <th style="text-align:left;">Course</th>
+            <th style="text-align:left;">Faculty</th>
+            <th style="text-align:left;">Subject Area</th>
+            <th style="text-align:left;">Professor</th>
+            <th style="text-align:left;">Institute</th>
             <th style="text-align:center;">Average rating</th>
             <th style="text-align:center;"># Ratings</th>
             </tr>
@@ -68,6 +112,18 @@
             <tr>
                 <td>
                 <a href="{% url 'course_detail' course.slug %}">{{ course.name }}</a>
+                </td>
+                <td>
+                {% if course.faculty %}{{ course.faculty.name }}{% else %}—{% endif %}
+                </td>
+                <td>
+                {% if course.fachgebiet %}{{ course.fachgebiet.name }}{% else %}—{% endif %}
+                </td>
+                <td>
+                {% if course.fachgebiet %}{{ course.fachgebiet.professor }}{% else %}—{% endif %}
+                </td>
+                <td>
+                {% if course.institute %}{{ course.institute.name }}{% else %}—{% endif %}
                 </td>
                 <td style="text-align:center;">
                 {% if course.rating_count %}
@@ -92,13 +148,13 @@
         <ul style="list-style:none; padding:0; display:flex; gap:.5rem;">
             {% if page_obj.has_previous %}
             <li>
-                <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">« Prev</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if faculty_filter %}&faculty={{ faculty_filter|urlencode }}{% endif %}{% if fachgebiet_filter %}&fachgebiet={{ fachgebiet_filter|urlencode }}{% endif %}{% if professor_filter %}&professor={{ professor_filter|urlencode }}{% endif %}{% if institut_filter %}&institut={{ institut_filter|urlencode }}{% endif %}">« Prev</a>
             </li>
             {% endif %}
             <li>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</li>
             {% if page_obj.has_next %}
             <li>
-                <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Next »</a>
+                <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if faculty_filter %}&faculty={{ faculty_filter|urlencode }}{% endif %}{% if fachgebiet_filter %}&fachgebiet={{ fachgebiet_filter|urlencode }}{% endif %}{% if professor_filter %}&professor={{ professor_filter|urlencode }}{% endif %}{% if institut_filter %}&institut={{ institut_filter|urlencode }}{% endif %}">Next »</a>
             </li>
             {% endif %}
         </ul>

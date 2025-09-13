@@ -1,0 +1,135 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='courses' %}">{% trans 'Courses' %}</a>
+&rsaquo; <a href="{% url 'admin:courses_visitor_changelist' %}">{% trans 'Visitors' %}</a>
+&rsaquo; {% trans 'Statistics' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>{% trans 'Visitor Statistics' %}</h2>
+    
+    <div class="results">
+        <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+            <!-- 7-day stats -->
+            <div class="stats-card" style="border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+                <h3>{% trans 'Last 7 Days' %}</h3>
+                <div class="stat-item">
+                    <strong>{% trans 'Total Page Views:' %}</strong> {{ stats_7d.total_views|default:0 }}
+                </div>
+                <div class="stat-item">
+                    <strong>{% trans 'Unique Visitors:' %}</strong> {{ stats_7d.unique_visitors|default:0 }}
+                </div>
+                <div class="stat-item">
+                    <strong>{% trans 'Logged-in Views:' %}</strong> {{ stats_7d.logged_in_views|default:0 }}
+                </div>
+            </div>
+            
+            <!-- 30-day stats -->
+            <div class="stats-card" style="border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+                <h3>{% trans 'Last 30 Days' %}</h3>
+                <div class="stat-item">
+                    <strong>{% trans 'Total Page Views:' %}</strong> {{ stats_30d.total_views|default:0 }}
+                </div>
+                <div class="stat-item">
+                    <strong>{% trans 'Unique Visitors:' %}</strong> {{ stats_30d.unique_visitors|default:0 }}
+                </div>
+                <div class="stat-item">
+                    <strong>{% trans 'Logged-in Views:' %}</strong> {{ stats_30d.logged_in_views|default:0 }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Popular pages -->
+        <div class="popular-pages" style="margin-bottom: 30px;">
+            <h3>{% trans 'Most Visited Pages (Last 30 Days)' %}</h3>
+            {% if stats_30d.popular_pages %}
+                <table class="results">
+                    <thead>
+                        <tr>
+                            <th>{% trans 'Page' %}</th>
+                            <th>{% trans 'Views' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for page in stats_30d.popular_pages %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td>{{ page.path }}</td>
+                            <td>{{ page.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>{% trans 'No data available yet.' %}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Recent visitors -->
+        <div class="recent-visitors">
+            <h3>{% trans 'Recent Visitors' %}</h3>
+            {% if recent_visitors %}
+                <table class="results">
+                    <thead>
+                        <tr>
+                            <th>{% trans 'IP Address' %}</th>
+                            <th>{% trans 'Page' %}</th>
+                            <th>{% trans 'User' %}</th>
+                            <th>{% trans 'Status' %}</th>
+                            <th>{% trans 'Time' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for visitor in recent_visitors %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td>{{ visitor.ip_address }}</td>
+                            <td>{{ visitor.path|truncatechars:50 }}</td>
+                            <td>
+                                {% if visitor.user %}
+                                    <a href="{% url 'admin:auth_user_change' visitor.user.pk %}">{{ visitor.user.username }}</a>
+                                {% else %}
+                                    <em>{% trans 'Anonymous' %}</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-{{ visitor.status_code|slice:':1' }}">{{ visitor.status_code }}</span>
+                            </td>
+                            <td>{{ visitor.created_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>{% trans 'No recent visitors.' %}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-item {
+    margin-bottom: 10px;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.status-2 { color: #28a745; }
+.status-3 { color: #ffc107; }
+.status-4, .status-5 { color: #dc3545; }
+</style>
+{% endblock %}

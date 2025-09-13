@@ -7,8 +7,8 @@ from django.http import JsonResponse
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
-from .models import Course, Rating, UserProfile, RatingFlag
-from .forms import RatingForm, CourseCSVUploadForm, UserProfileForm, RatingFlagForm
+from .models import Course, Rating, UserProfile, RatingFlag, Visitor, Faculty, Institute, Fachgebiet
+from .forms import RatingForm, CourseForm, CourseCSVUploadForm, UserProfileForm, RatingFlagForm
 from django.db.models import Avg, Count, Value
 from django.db.models.functions import Coalesce
 import csv
@@ -41,11 +41,27 @@ class CourseListView(ListView):
     def get_queryset(self):
         q = (self.request.GET.get("q") or "").strip()
         sort = (self.request.GET.get("sort") or "name").lower()
+        faculty_filter = (self.request.GET.get("faculty") or "").strip()
+        fachgebiet_filter = (self.request.GET.get("fachgebiet") or "").strip()
+        professor_filter = (self.request.GET.get("professor") or "").strip()
+        institut_filter = (self.request.GET.get("institut") or "").strip()
 
         qs = Course.objects.all()
 
         if q:
             qs = qs.filter(name__icontains=q)
+        
+        if faculty_filter:
+            qs = qs.filter(fachgebiet__institute__faculty__name__icontains=faculty_filter)
+        
+        if fachgebiet_filter:
+            qs = qs.filter(fachgebiet__name__icontains=fachgebiet_filter)
+        
+        if professor_filter:
+            qs = qs.filter(fachgebiet__professor__icontains=professor_filter)
+        
+        if institut_filter:
+            qs = qs.filter(fachgebiet__institute__name__icontains=institut_filter)
 
         # Annotate averages & counts for listing and sorting
         qs = qs.annotate(
@@ -80,6 +96,17 @@ class CourseListView(ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["q"] = (self.request.GET.get("q") or "").strip()
         ctx["sort"] = (self.request.GET.get("sort") or "name").lower()
+        ctx["faculty_filter"] = (self.request.GET.get("faculty") or "").strip()
+        ctx["fachgebiet_filter"] = (self.request.GET.get("fachgebiet") or "").strip()
+        ctx["professor_filter"] = (self.request.GET.get("professor") or "").strip()
+        ctx["institut_filter"] = (self.request.GET.get("institut") or "").strip()
+        
+        # Get unique values for filter dropdowns - query models directly
+        ctx["faculties"] = Faculty.objects.values_list('name', flat=True).distinct().order_by('name')
+        ctx["fachgebiete"] = Fachgebiet.objects.values_list('name', flat=True).distinct().order_by('name')
+        ctx["professors"] = Fachgebiet.objects.values_list('professor', flat=True).distinct().order_by('professor')
+        ctx["institute"] = Institute.objects.values_list('name', flat=True).distinct().order_by('name')
+        
         return ctx
 
 def course_detail(request, slug):
@@ -294,29 +321,99 @@ def upload_courses_csv(request):
                 with transaction.atomic():
                     for row_num, row in enumerate(csv_reader, start=start_row):
                         try:
-                            # Get course name based on whether we have a header or not
+                            # Get course data based on whether we have a header or not
                             if has_header:
-                                # DictReader: get from 'name' column or first column
-                                if 'name' in row and row['name'].strip():
-                                    course_name = row['name'].strip()
-                                elif row and list(row.values())[0].strip():
+                                # DictReader: get from columns
+                                course_name = row.get('name', '').strip() if 'name' in row else ''
+                                faculty_name = row.get('faculty', '').strip() if 'faculty' in row else ''
+                                institute_name = row.get('institute', '').strip() if 'institute' in row else ''
+                                fachgebiet = row.get('fachgebiet', '').strip() if 'fachgebiet' in row else ''
+                                professor = row.get('professor', '').strip() if 'professor' in row else ''
+                                
+                                # Fallback to first column if name is empty
+                                if not course_name and row and list(row.values())[0].strip():
                                     course_name = list(row.values())[0].strip()
-                                else:
+                                
+                                if not course_name:
                                     errors.append(f"Row {row_num}: Empty course name")
                                     continue
                             else:
-                                # Regular reader: get from first column
+                                # Regular reader: get from columns by position
                                 if row and len(row) > 0 and row[0].strip():
                                     course_name = row[0].strip()
+                                    faculty_name = row[1].strip() if len(row) > 1 else ''
+                                    institute_name = row[2].strip() if len(row) > 2 else ''
+                                    fachgebiet = row[3].strip() if len(row) > 3 else ''
+                                    professor = row[4].strip() if len(row) > 4 else ''
                                 else:
                                     errors.append(f"Row {row_num}: Empty course name")
                                     continue
                             
+                            # Look up or create faculty, institute, and fachgebiet
+                            faculty_obj = None
+                            institute_obj = None
+                            fachgebiet_obj = None
+                            
+                            if faculty_name:
+                                faculty_obj, _ = Faculty.objects.get_or_create(
+                                    name=faculty_name,
+                                    defaults={'code': faculty_name[:10].upper()}
+                                )
+                            
+                            if institute_name:
+                                # If we have a faculty, use it; otherwise create a default one
+                                if not faculty_obj and faculty_name:
+                                    faculty_obj, _ = Faculty.objects.get_or_create(
+                                        name=faculty_name,
+                                        defaults={'code': faculty_name[:10].upper()}
+                                    )
+                                
+                                institute_obj, _ = Institute.objects.get_or_create(
+                                    name=institute_name,
+                                    defaults={
+                                        'faculty': faculty_obj,
+                                        'code': institute_name[:20].upper()
+                                    }
+                                )
+                            
+                            if fachgebiet and professor:
+                                # Create fachgebiet if we have both name and professor
+                                if not institute_obj:
+                                    # Create a default institute if none exists
+                                    if not faculty_obj:
+                                        faculty_obj, _ = Faculty.objects.get_or_create(
+                                            name='Unknown Faculty',
+                                            defaults={'code': 'UNK'}
+                                        )
+                                    institute_obj, _ = Institute.objects.get_or_create(
+                                        name='Unknown Institute',
+                                        defaults={
+                                            'faculty': faculty_obj,
+                                            'code': 'UNK'
+                                        }
+                                    )
+                                
+                                fachgebiet_obj, _ = Fachgebiet.objects.get_or_create(
+                                    name=fachgebiet,
+                                    defaults={
+                                        'professor': professor,
+                                        'institute': institute_obj
+                                    }
+                                )
+                            
                             # Create course if it doesn't exist
                             course, created = Course.objects.get_or_create(
                                 name=course_name,
-                                defaults={'name': course_name}
+                                defaults={
+                                    'name': course_name,
+                                    'fachgebiet': fachgebiet_obj
+                                }
                             )
+                            
+                            # Update existing course with new fachgebiet if provided
+                            if not created and fachgebiet_obj and not course.fachgebiet:
+                                course.fachgebiet = fachgebiet_obj
+                                course.save()
                             
                             if created:
                                 created_courses.append(course_name)

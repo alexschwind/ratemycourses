@@ -14,7 +14,7 @@
 }
 
 .star-rating .star {
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: #ddd;
     cursor: pointer;
     transition: color 0.2s ease;
@@ -44,43 +44,153 @@
 .rating-input {
     display: none !important;
 }
+
+/* Slider Styles */
+.slider-container {
+    margin: 1rem 0;
+}
+
+.slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #ddd;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    border: none;
+}
+
+.slider-value {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+/* Rating Section Styles */
+.rating-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.rating-section h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.rating-prompt {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+
+.text-field {
+    margin-top: 1rem;
+}
+
+.text-field textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.section-divider {
+    border-top: 2px solid #e0e0e0;
+    margin: 2rem 0;
+}
 </style>
 {% endblock %}
 
 {% block extra_body %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const starRating = document.querySelector('.star-rating');
-    if (!starRating) return;
-    
-    const stars = starRating.querySelectorAll('.star');
-    const hiddenInput = starRating.parentElement.querySelector('.rating-input');
-    const ratingValue = starRating.querySelector('.rating-value');
-    const currentRating = parseInt(starRating.dataset.rating) || 0;
-    
-    // Set initial state
-    updateStars(currentRating);
-    
-    stars.forEach((star, index) => {
-        star.addEventListener('click', function() {
-            const value = parseInt(this.dataset.value);
-            updateStars(value);
-            hiddenInput.value = value;
-            ratingValue.textContent = value;
+    // Initialize all star ratings
+    const starRatings = document.querySelectorAll('.star-rating');
+    starRatings.forEach(starRating => {
+        const stars = starRating.querySelectorAll('.star');
+        const hiddenInput = starRating.parentElement.querySelector('.rating-input');
+        const ratingValue = starRating.querySelector('.rating-value');
+        const currentRating = parseInt(starRating.dataset.rating) || 0;
+        
+        // Set initial state
+        updateStars(stars, currentRating);
+        
+        stars.forEach((star, index) => {
+            star.addEventListener('click', function() {
+                const value = parseInt(this.dataset.value);
+                updateStars(stars, value);
+                hiddenInput.value = value;
+                if (ratingValue) ratingValue.textContent = value;
+            });
+            
+            star.addEventListener('mouseenter', function() {
+                const value = parseInt(this.dataset.value);
+                updateStars(stars, value);
+            });
         });
         
-        star.addEventListener('mouseenter', function() {
-            const value = parseInt(this.dataset.value);
-            updateStars(value);
+        starRating.addEventListener('mouseleave', function() {
+            const currentValue = parseInt(hiddenInput.value) || 0;
+            updateStars(stars, currentValue);
         });
     });
     
-    starRating.addEventListener('mouseleave', function() {
-        const currentValue = parseInt(hiddenInput.value) || 0;
-        updateStars(currentValue);
+    // Initialize sliders
+    const sliders = document.querySelectorAll('.slider');
+    sliders.forEach(slider => {
+        const valueDisplay = slider.parentElement.querySelector('.slider-value');
+        const hiddenInput = slider.parentElement.querySelector('.slider-input');
+        
+        slider.addEventListener('input', function() {
+            const value = parseInt(this.value) || 0;
+            if (valueDisplay) {
+                if (valueDisplay.id === 'practical-balance-display') {
+                    // Special handling for practical/theoretical balance
+                    const theoretical = 100 - value;
+                    valueDisplay.textContent = `${value}% practical - ${theoretical}% theoretical`;
+                } else {
+                    valueDisplay.textContent = value;
+                }
+            }
+            if (hiddenInput) hiddenInput.value = value;
+        });
+        
+        // Set initial value
+        const initialValue = hiddenInput ? (parseInt(hiddenInput.value) || 50) : (parseInt(slider.value) || 50);
+        if (valueDisplay) {
+            if (valueDisplay.id === 'practical-balance-display') {
+                // Special handling for practical/theoretical balance
+                const theoretical = 100 - initialValue;
+                valueDisplay.textContent = `${initialValue}% practical - ${theoretical}% theoretical`;
+            } else {
+                valueDisplay.textContent = initialValue;
+            }
+        }
     });
     
-    function updateStars(rating) {
+    function updateStars(stars, rating) {
         stars.forEach((star, index) => {
             if (index < rating) {
                 star.classList.add('active');
@@ -106,45 +216,335 @@ document.addEventListener('DOMContentLoaded', function() {
     <form method="post">
         {% csrf_token %}
         
-        <label for="{{ form.rating.id_for_label }}">Rating:</label>
-        <div class="star-rating-container">
-            <div class="star-rating" data-rating="{{ form.rating.value|default:0 }}">
-                <div class="stars">
-                    <span class="star" data-value="1">★</span>
-                    <span class="star" data-value="2">★</span>
-                    <span class="star" data-value="3">★</span>
-                    <span class="star" data-value="4">★</span>
-                    <span class="star" data-value="5">★</span>
+        <!-- Overall Rating Section -->
+        <div class="rating-section">
+            <h3>Overall Rating</h3>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="1 - Poor">★</span>
+                        <span class="star" data-value="2" data-tooltip="2 - Below Average">★</span>
+                        <span class="star" data-value="3" data-tooltip="3 - Average">★</span>
+                        <span class="star" data-value="4" data-tooltip="4 - Good">★</span>
+                        <span class="star" data-value="5" data-tooltip="5 - Excellent">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.rating.value|default:0 }}</span>/5
+                    </div>
                 </div>
-                <div class="rating-text">
-                    <span class="rating-value">{{ form.rating.value|default:0 }}</span>/5
-                </div>
+                {{ form.rating }}
             </div>
-            {{ form.rating }}
+            {% if form.rating.errors %}
+                <div class="error">{{ form.rating.errors }}</div>
+            {% endif %}
+            
+            <div class="text-field">
+                <label for="{{ form.comment.id_for_label }}">General Comment:</label>
+                {{ form.comment }}
+                {% if form.comment.errors %}
+                    <div class="error">{{ form.comment.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Course Details -->
+            <div class="form-group">
+                <label for="{{ form.year.id_for_label }}">Year:</label>
+                {{ form.year }}
+                {% if form.year.errors %}
+                    <div class="error">{{ form.year.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.semester.id_for_label }}">Semester:</label>
+                {{ form.semester }}
+                {% if form.semester.errors %}
+                    <div class="error">{{ form.semester.errors }}</div>
+                {% endif %}
+            </div>
         </div>
-        {% if form.rating.errors %}
-            <small>{{ form.rating.errors }}</small>
-        {% endif %}
-        
-        <label for="{{ form.comment.id_for_label }}">Comment:</label>
-        {{ form.comment }}
-        {% if form.comment.errors %}
-            <small>{{ form.comment.errors }}</small>
-        {% endif %}
-        
-        <label for="{{ form.year.id_for_label }}">Year:</label>
-        {{ form.year }}
-        {% if form.year.errors %}
-            <small>{{ form.year.errors }}</small>
-        {% endif %}
-        
-        <label for="{{ form.semester.id_for_label }}">Semester:</label>
-        {{ form.semester }}
-        {% if form.semester.errors %}
-            <small>{{ form.semester.errors }}</small>
-        {% endif %}
-        
-        <button type="submit">Update Rating</button>
+
+        <div class="section-divider"></div>
+
+        <!-- Detailed Rating Sections -->
+        <h2>Detailed Ratings</h2>
+        <p>Please provide detailed ratings for different aspects of the course. All ratings are optional but help provide more comprehensive feedback.</p>
+
+        <!-- 1. Workload / Time Required -->
+        <div class="rating-section">
+            <h3>1. Workload / Time Required</h3>
+            <p class="rating-prompt">How many hours/week did you spend on average (incl. lectures)?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.workload_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="≤3h">★</span>
+                        <span class="star" data-value="2" data-tooltip="4–6h">★</span>
+                        <span class="star" data-value="3" data-tooltip="7–9h">★</span>
+                        <span class="star" data-value="4" data-tooltip="10–12h">★</span>
+                        <span class="star" data-value="5" data-tooltip="≥13h">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.workload_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.workload_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.workload_text.id_for_label }}">Additional details (e.g., ECTS credits, specific time breakdown):</label>
+                {{ form.workload_text }}
+            </div>
+            {% if form.workload_rating.errors %}
+                <div class="error">{{ form.workload_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 2. Perceived Difficulty -->
+        <div class="rating-section">
+            <h3>2. Perceived Difficulty</h3>
+            <p class="rating-prompt">How cognitively demanding was the course?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.difficulty_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="Very easy">★</span>
+                        <span class="star" data-value="2" data-tooltip="Easy">★</span>
+                        <span class="star" data-value="3" data-tooltip="Moderate">★</span>
+                        <span class="star" data-value="4" data-tooltip="Hard">★</span>
+                        <span class="star" data-value="5" data-tooltip="Extremely hard">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.difficulty_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.difficulty_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.difficulty_text.id_for_label }}">Additional details about difficulty:</label>
+                {{ form.difficulty_text }}
+            </div>
+            {% if form.difficulty_rating.errors %}
+                <div class="error">{{ form.difficulty_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 3. Learning Gain -->
+        <div class="rating-section">
+            <h3>3. Learning Gain</h3>
+            <p class="rating-prompt">How much did your knowledge/skills improve?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.learning_gain_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="None">★</span>
+                        <span class="star" data-value="2" data-tooltip="Little">★</span>
+                        <span class="star" data-value="3" data-tooltip="Moderate">★</span>
+                        <span class="star" data-value="4" data-tooltip="Much">★</span>
+                        <span class="star" data-value="5" data-tooltip="A great deal">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.learning_gain_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.learning_gain_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.learning_gain_text.id_for_label }}">Additional details about learning gain:</label>
+                {{ form.learning_gain_text }}
+            </div>
+            {% if form.learning_gain_rating.errors %}
+                <div class="error">{{ form.learning_gain_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 4. Teaching Quality -->
+        <div class="rating-section">
+            <h3>4. Teaching Quality (Lectures/Tutorials)</h3>
+            <p class="rating-prompt">How clear and well-structured were the lectures/tutorials?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.teaching_quality_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="Very poor">★</span>
+                        <span class="star" data-value="2" data-tooltip="Poor">★</span>
+                        <span class="star" data-value="3" data-tooltip="Average">★</span>
+                        <span class="star" data-value="4" data-tooltip="Good">★</span>
+                        <span class="star" data-value="5" data-tooltip="Excellent">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.teaching_quality_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.teaching_quality_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.teaching_quality_text.id_for_label }}">Additional details about teaching quality:</label>
+                {{ form.teaching_quality_text }}
+            </div>
+            {% if form.teaching_quality_rating.errors %}
+                <div class="error">{{ form.teaching_quality_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 5. Assessment Fairness -->
+        <div class="rating-section">
+            <h3>5. Assessment Fairness</h3>
+            <p class="rating-prompt">How fair and aligned were exams/assignments with the taught material?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.assessment_fairness_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="Very unfair">★</span>
+                        <span class="star" data-value="2" data-tooltip="Unfair">★</span>
+                        <span class="star" data-value="3" data-tooltip="Neutral">★</span>
+                        <span class="star" data-value="4" data-tooltip="Fair">★</span>
+                        <span class="star" data-value="5" data-tooltip="Very fair">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.assessment_fairness_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.assessment_fairness_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.assessment_fairness_text.id_for_label }}">Additional details about assessment fairness:</label>
+                {{ form.assessment_fairness_text }}
+            </div>
+            {% if form.assessment_fairness_rating.errors %}
+                <div class="error">{{ form.assessment_fairness_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 6. Practical ↔ Theoretical Balance (Slider) -->
+        <div class="rating-section">
+            <h3>6. Practical ↔ Theoretical Balance</h3>
+            <p class="rating-prompt">How practical vs theoretical was the course content?</p>
+            <div class="slider-container">
+                <input type="range" class="slider" min="0" max="100" step="25" value="{{ form.practical_theoretical_balance.value|default:50 }}">
+                <div class="slider-value" id="practical-balance-display">
+                    {% with balance_value=form.practical_theoretical_balance.value|default:50 %}
+                        {{ balance_value }}% practical - {{ 100|add:"-"|add:balance_value }}% theoretical
+                    {% endwith %}
+                </div>
+                {{ form.practical_theoretical_balance }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.practical_theoretical_text.id_for_label }}">Additional details about practical/theoretical balance:</label>
+                {{ form.practical_theoretical_text }}
+            </div>
+            {% if form.practical_theoretical_balance.errors %}
+                <div class="error">{{ form.practical_theoretical_balance.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 7. Relevance / Applicability -->
+        <div class="rating-section">
+            <h3>7. Relevance / Applicability</h3>
+            <p class="rating-prompt">How relevant is the content to real-world problems or your goals?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.relevance_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="Not relevant">★</span>
+                        <span class="star" data-value="2" data-tooltip="Slightly relevant">★</span>
+                        <span class="star" data-value="3" data-tooltip="Moderately relevant">★</span>
+                        <span class="star" data-value="4" data-tooltip="Very relevant">★</span>
+                        <span class="star" data-value="5" data-tooltip="Highly relevant">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.relevance_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.relevance_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.relevance_text.id_for_label }}">Additional details about relevance/applicability:</label>
+                {{ form.relevance_text }}
+            </div>
+            {% if form.relevance_rating.errors %}
+                <div class="error">{{ form.relevance_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 8. Materials & Resources -->
+        <div class="rating-section">
+            <h3>8. Materials & Resources</h3>
+            <p class="rating-prompt">Quality of slides/readings/tools (accuracy, accessibility)?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.materials_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="Very poor">★</span>
+                        <span class="star" data-value="2" data-tooltip="Poor">★</span>
+                        <span class="star" data-value="3" data-tooltip="Average">★</span>
+                        <span class="star" data-value="4" data-tooltip="Good">★</span>
+                        <span class="star" data-value="5" data-tooltip="Excellent">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.materials_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.materials_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.materials_text.id_for_label }}">Additional details about materials and resources:</label>
+                {{ form.materials_text }}
+            </div>
+            {% if form.materials_rating.errors %}
+                <div class="error">{{ form.materials_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 9. Support & Responsiveness -->
+        <div class="rating-section">
+            <h3>9. Support & Responsiveness</h3>
+            <p class="rating-prompt">How responsive/helpful were instructors/TAs?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.support_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="Unresponsive">★</span>
+                        <span class="star" data-value="2" data-tooltip="Rarely responsive">★</span>
+                        <span class="star" data-value="3" data-tooltip="Sometimes responsive">★</span>
+                        <span class="star" data-value="4" data-tooltip="Usually responsive">★</span>
+                        <span class="star" data-value="5" data-tooltip="Very responsive">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.support_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.support_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.support_text.id_for_label }}">Additional details about support and responsiveness:</label>
+                {{ form.support_text }}
+            </div>
+            {% if form.support_rating.errors %}
+                <div class="error">{{ form.support_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 10. Course Organization -->
+        <div class="rating-section">
+            <h3>10. Course Organization</h3>
+            <p class="rating-prompt">Were schedules, deadlines, and info clear and stable?</p>
+            <div class="star-rating-container">
+                <div class="star-rating" data-rating="{{ form.organization_rating.value|default:0 }}">
+                    <div class="stars">
+                        <span class="star" data-value="1" data-tooltip="Chaotic">★</span>
+                        <span class="star" data-value="2" data-tooltip="Poorly organized">★</span>
+                        <span class="star" data-value="3" data-tooltip="Average">★</span>
+                        <span class="star" data-value="4" data-tooltip="Well organized">★</span>
+                        <span class="star" data-value="5" data-tooltip="Very well organized">★</span>
+                    </div>
+                    <div class="rating-text">
+                        <span class="rating-value">{{ form.organization_rating.value|default:0 }}</span>/5
+                    </div>
+                </div>
+                {{ form.organization_rating }}
+            </div>
+            <div class="text-field">
+                <label for="{{ form.organization_text.id_for_label }}">Additional details about course organization:</label>
+                {{ form.organization_text }}
+            </div>
+            {% if form.organization_rating.errors %}
+                <div class="error">{{ form.organization_rating.errors }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Rating</button>
     </form>
     
     <nav>

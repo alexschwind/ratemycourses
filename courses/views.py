@@ -4,12 +4,29 @@ from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
-from .models import Course, Rating
-from .forms import RatingForm, CourseCSVUploadForm
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth import get_user_model
+from .models import Course, Rating, UserProfile, RatingFlag
+from .forms import RatingForm, CourseCSVUploadForm, UserProfileForm, RatingFlagForm
 from django.db.models import Avg, Count, Value
 from django.db.models.functions import Coalesce
 import csv
 import io
+
+User = get_user_model()
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Automatically create a UserProfile when a new user is created"""
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Automatically save the UserProfile when the user is saved"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
 
 from django.views.generic import ListView, TemplateView
 from .models import Course
@@ -41,6 +58,19 @@ class CourseListView(ListView):
             qs = qs.order_by(Coalesce("avg_rating", Value(0)).desc(), "name")
         elif sort == "rating_asc":     # lowest first
             qs = qs.order_by(Coalesce("avg_rating", Value(0)).asc(), "name")
+        elif sort == "personal" and self.request.user.is_authenticated and hasattr(self.request.user, 'profile'):
+            # Sort by personal weighted rating
+            # This is a simplified approach - for better performance, you might want to pre-calculate these
+            courses_with_personal_ratings = []
+            for course in qs:
+                user_rating = Rating.objects.filter(course=course, user=self.request.user).first()
+                if user_rating:
+                    personal_rating = self.request.user.profile.calculate_weighted_rating(user_rating)
+                    courses_with_personal_ratings.append((course, personal_rating))
+            
+            # Sort by personal rating (highest first)
+            courses_with_personal_ratings.sort(key=lambda x: x[1] or 0, reverse=True)
+            qs = [course for course, _ in courses_with_personal_ratings]
         else:                          # default: name
             qs = qs.order_by("name")
 
@@ -54,13 +84,37 @@ class CourseListView(ListView):
 
 def course_detail(request, slug):
     course = get_object_or_404(Course, slug=slug)
-    qs = course.ratings.select_related("user")
-    agg = qs.aggregate(avg=Avg("rating"), count=Count("id"))
+    qs = course.ratings.filter(is_disabled=False).select_related("user").prefetch_related("flags")
+    
+    # Calculate averages for all rating dimensions
+    agg = qs.aggregate(
+        avg=Avg("rating"), 
+        count=Count("id"),
+        # Detailed rating averages
+        avg_workload=Avg("workload_rating"),
+        avg_difficulty=Avg("difficulty_rating"),
+        avg_learning_gain=Avg("learning_gain_rating"),
+        avg_teaching_quality=Avg("teaching_quality_rating"),
+        avg_assessment_fairness=Avg("assessment_fairness_rating"),
+        avg_practical_theoretical=Avg("practical_theoretical_balance"),
+        avg_relevance=Avg("relevance_rating"),
+        avg_materials=Avg("materials_rating"),
+        avg_support=Avg("support_rating"),
+        avg_organization=Avg("organization_rating"),
+    )
     
     # Check if the current user has already rated this course
     user_has_rated = False
+    user_rating = None
+    personal_weighted_rating = None
+    
     if request.user.is_authenticated:
         user_has_rated = Rating.objects.filter(course=course, user=request.user).exists()
+        if user_has_rated:
+            user_rating = Rating.objects.filter(course=course, user=request.user).first()
+            # Calculate personal weighted rating
+            if hasattr(request.user, 'profile'):
+                personal_weighted_rating = request.user.profile.calculate_weighted_rating(user_rating)
     
     return render(
         request,
@@ -70,7 +124,10 @@ def course_detail(request, slug):
             "ratings": qs, 
             "avg": agg["avg"], 
             "count": agg["count"],
-            "user_has_rated": user_has_rated
+            "user_has_rated": user_has_rated,
+            "user_rating": user_rating,
+            "personal_weighted_rating": personal_weighted_rating,
+            "rating_averages": agg
         },
     )
 
@@ -92,6 +149,28 @@ def add_rating(request, slug):
                         existing_rating.comment = data["comment"]
                         existing_rating.year = data["year"]
                         existing_rating.semester = data["semester"]
+                        # Update detailed ratings
+                        existing_rating.workload_rating = data.get("workload_rating")
+                        existing_rating.difficulty_rating = data.get("difficulty_rating")
+                        existing_rating.learning_gain_rating = data.get("learning_gain_rating")
+                        existing_rating.teaching_quality_rating = data.get("teaching_quality_rating")
+                        existing_rating.assessment_fairness_rating = data.get("assessment_fairness_rating")
+                        existing_rating.practical_theoretical_balance = data.get("practical_theoretical_balance")
+                        existing_rating.relevance_rating = data.get("relevance_rating")
+                        existing_rating.materials_rating = data.get("materials_rating")
+                        existing_rating.support_rating = data.get("support_rating")
+                        existing_rating.organization_rating = data.get("organization_rating")
+                        # Update text fields
+                        existing_rating.workload_text = data.get("workload_text", "")
+                        existing_rating.difficulty_text = data.get("difficulty_text", "")
+                        existing_rating.learning_gain_text = data.get("learning_gain_text", "")
+                        existing_rating.teaching_quality_text = data.get("teaching_quality_text", "")
+                        existing_rating.assessment_fairness_text = data.get("assessment_fairness_text", "")
+                        existing_rating.practical_theoretical_text = data.get("practical_theoretical_text", "")
+                        existing_rating.relevance_text = data.get("relevance_text", "")
+                        existing_rating.materials_text = data.get("materials_text", "")
+                        existing_rating.support_text = data.get("support_text", "")
+                        existing_rating.organization_text = data.get("organization_text", "")
                         existing_rating.save()
                         messages.success(request, "Your rating has been updated.")
                     else:
@@ -103,6 +182,28 @@ def add_rating(request, slug):
                             comment=data["comment"],
                             year=data["year"],
                             semester=data["semester"],
+                            # Detailed ratings
+                            workload_rating=data.get("workload_rating"),
+                            difficulty_rating=data.get("difficulty_rating"),
+                            learning_gain_rating=data.get("learning_gain_rating"),
+                            teaching_quality_rating=data.get("teaching_quality_rating"),
+                            assessment_fairness_rating=data.get("assessment_fairness_rating"),
+                            practical_theoretical_balance=data.get("practical_theoretical_balance"),
+                            relevance_rating=data.get("relevance_rating"),
+                            materials_rating=data.get("materials_rating"),
+                            support_rating=data.get("support_rating"),
+                            organization_rating=data.get("organization_rating"),
+                            # Text fields
+                            workload_text=data.get("workload_text", ""),
+                            difficulty_text=data.get("difficulty_text", ""),
+                            learning_gain_text=data.get("learning_gain_text", ""),
+                            teaching_quality_text=data.get("teaching_quality_text", ""),
+                            assessment_fairness_text=data.get("assessment_fairness_text", ""),
+                            practical_theoretical_text=data.get("practical_theoretical_text", ""),
+                            relevance_text=data.get("relevance_text", ""),
+                            materials_text=data.get("materials_text", ""),
+                            support_text=data.get("support_text", ""),
+                            organization_text=data.get("organization_text", ""),
                         )
                         messages.success(request, "Your rating has been saved.")
                 return redirect("course_detail", slug=course.slug)
@@ -116,6 +217,28 @@ def add_rating(request, slug):
                 'comment': existing_rating.comment,
                 'year': existing_rating.year,
                 'semester': existing_rating.semester,
+                # Detailed ratings
+                'workload_rating': existing_rating.workload_rating,
+                'difficulty_rating': existing_rating.difficulty_rating,
+                'learning_gain_rating': existing_rating.learning_gain_rating,
+                'teaching_quality_rating': existing_rating.teaching_quality_rating,
+                'assessment_fairness_rating': existing_rating.assessment_fairness_rating,
+                'practical_theoretical_balance': existing_rating.practical_theoretical_balance,
+                'relevance_rating': existing_rating.relevance_rating,
+                'materials_rating': existing_rating.materials_rating,
+                'support_rating': existing_rating.support_rating,
+                'organization_rating': existing_rating.organization_rating,
+                # Text fields
+                'workload_text': existing_rating.workload_text,
+                'difficulty_text': existing_rating.difficulty_text,
+                'learning_gain_text': existing_rating.learning_gain_text,
+                'teaching_quality_text': existing_rating.teaching_quality_text,
+                'assessment_fairness_text': existing_rating.assessment_fairness_text,
+                'practical_theoretical_text': existing_rating.practical_theoretical_text,
+                'relevance_text': existing_rating.relevance_text,
+                'materials_text': existing_rating.materials_text,
+                'support_text': existing_rating.support_text,
+                'organization_text': existing_rating.organization_text,
             })
         else:
             form = RatingForm()
@@ -259,6 +382,28 @@ def edit_rating(request, rating_id):
             rating.comment = data["comment"]
             rating.year = data["year"]
             rating.semester = data["semester"]
+            # Update detailed ratings
+            rating.workload_rating = data.get("workload_rating")
+            rating.difficulty_rating = data.get("difficulty_rating")
+            rating.learning_gain_rating = data.get("learning_gain_rating")
+            rating.teaching_quality_rating = data.get("teaching_quality_rating")
+            rating.assessment_fairness_rating = data.get("assessment_fairness_rating")
+            rating.practical_theoretical_balance = data.get("practical_theoretical_balance")
+            rating.relevance_rating = data.get("relevance_rating")
+            rating.materials_rating = data.get("materials_rating")
+            rating.support_rating = data.get("support_rating")
+            rating.organization_rating = data.get("organization_rating")
+            # Update text fields
+            rating.workload_text = data.get("workload_text", "")
+            rating.difficulty_text = data.get("difficulty_text", "")
+            rating.learning_gain_text = data.get("learning_gain_text", "")
+            rating.teaching_quality_text = data.get("teaching_quality_text", "")
+            rating.assessment_fairness_text = data.get("assessment_fairness_text", "")
+            rating.practical_theoretical_text = data.get("practical_theoretical_text", "")
+            rating.relevance_text = data.get("relevance_text", "")
+            rating.materials_text = data.get("materials_text", "")
+            rating.support_text = data.get("support_text", "")
+            rating.organization_text = data.get("organization_text", "")
             rating.save()
             messages.success(request, "Your rating has been updated.")
             return redirect("my_ratings")
@@ -268,6 +413,28 @@ def edit_rating(request, rating_id):
             'comment': rating.comment,
             'year': rating.year,
             'semester': rating.semester,
+            # Detailed ratings
+            'workload_rating': rating.workload_rating,
+            'difficulty_rating': rating.difficulty_rating,
+            'learning_gain_rating': rating.learning_gain_rating,
+            'teaching_quality_rating': rating.teaching_quality_rating,
+            'assessment_fairness_rating': rating.assessment_fairness_rating,
+            'practical_theoretical_balance': rating.practical_theoretical_balance,
+            'relevance_rating': rating.relevance_rating,
+            'materials_rating': rating.materials_rating,
+            'support_rating': rating.support_rating,
+            'organization_rating': rating.organization_rating,
+            # Text fields
+            'workload_text': rating.workload_text,
+            'difficulty_text': rating.difficulty_text,
+            'learning_gain_text': rating.learning_gain_text,
+            'teaching_quality_text': rating.teaching_quality_text,
+            'assessment_fairness_text': rating.assessment_fairness_text,
+            'practical_theoretical_text': rating.practical_theoretical_text,
+            'relevance_text': rating.relevance_text,
+            'materials_text': rating.materials_text,
+            'support_text': rating.support_text,
+            'organization_text': rating.organization_text,
         })
     
     return render(request, 'courses/edit_rating.html', {
@@ -290,4 +457,75 @@ def delete_rating(request, rating_id):
     
     return render(request, 'courses/delete_rating.html', {
         'rating': rating
+    })
+
+
+@login_required
+def edit_profile(request):
+    """View to edit user profile weights"""
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == "POST":
+        form = UserProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your profile weights have been updated.")
+            return redirect("profile")
+    else:
+        form = UserProfileForm(instance=profile)
+    
+    return render(request, 'courses/edit_profile.html', {
+        'form': form,
+        'profile': profile
+    })
+
+
+@login_required
+def reset_profile_weights(request):
+    """View to reset profile weights to default values"""
+    if request.method == "POST":
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        # Reset all weights to default (20 each)
+        for field in UserProfile._meta.fields:
+            if field.name.endswith('_weight'):
+                setattr(profile, field.name, 20)
+        profile.save()
+        messages.success(request, "Your profile weights have been reset to default values.")
+        return redirect("edit_profile")
+    
+    return render(request, 'courses/reset_profile_weights.html')
+
+
+@login_required
+def flag_rating(request, rating_id):
+    """View to flag a rating as inappropriate"""
+    rating = get_object_or_404(Rating, id=rating_id)
+    
+    # Prevent users from flagging their own ratings
+    if rating.user == request.user:
+        messages.error(request, "You cannot flag your own rating.")
+        return redirect("course_detail", slug=rating.course.slug)
+    
+    # Check if user has already flagged this rating
+    existing_flag = RatingFlag.objects.filter(rating=rating, flagged_by=request.user).first()
+    if existing_flag:
+        messages.info(request, "You have already flagged this rating.")
+        return redirect("course_detail", slug=rating.course.slug)
+    
+    if request.method == "POST":
+        form = RatingFlagForm(request.POST)
+        if form.is_valid():
+            flag = form.save(commit=False)
+            flag.rating = rating
+            flag.flagged_by = request.user
+            flag.save()
+            messages.success(request, "Thank you for reporting this rating. It will be reviewed by our moderators.")
+            return redirect("course_detail", slug=rating.course.slug)
+    else:
+        form = RatingFlagForm()
+    
+    return render(request, 'courses/flag_rating.html', {
+        'form': form,
+        'rating': rating,
+        'course': rating.course
     })

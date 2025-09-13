@@ -4,7 +4,6 @@
 {% block content %}
 <main class="container">
     <h1>Profile</h1>
-    <p>Your profile</p>
     
     <article>
         <header>
@@ -13,6 +12,19 @@
         <nav>
             <ul>
                 <li><a href="{% url 'my_ratings' %}">View My Ratings</a> - See and manage all your course ratings</li>
+            </ul>
+        </nav>
+    </article>
+    
+    <article>
+        <header>
+            <h2>Personal Preferences</h2>
+        </header>
+        <p>Customize how course ratings are weighted for your personal view. This affects how courses are sorted and how your personal ratings are calculated.</p>
+        <nav>
+            <ul>
+                <li><a href="{% url 'edit_profile' %}">Edit Rating Weights</a> - Configure which rating dimensions matter most to you</li>
+                <li><a href="{% url 'reset_profile_weights' %}">Reset to Default Weights</a> - Restore equal weighting for all dimensions</li>
             </ul>
         </nav>
     </article>

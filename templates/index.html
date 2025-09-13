@@ -8,6 +8,25 @@
     <hr>
     <p>Here you can check what courses are actually good and what other students think about it. You can log in with your TUB email address to write your own ratings.</p>
     <p>Right now the project focuses on the courses of the Informatik Bachelor program and the Computer Science Master program.</p>
+    
+    {% if user.is_authenticated %}
+    <div class="alert alert-info" style="margin: 1.5rem 0;">
+        <h4>Personalized Course Ratings</h4>
+        <p>You can now customize how course ratings are weighted for your personal view! <a href="{% url 'edit_profile' %}">Set your preferences</a> to see courses sorted by what matters most to you.</p>
+    </div>
+    {% endif %}
+    
+    <div class="alert" style="margin: 1.5rem 0;">
+        <h4>Can't find your verification email?</h4>
+        <p>If you don't see the verification email in your inbox, it might have been caught by your university's spam filter.</p>
+        <p>
+            <strong>TU Berlin students:</strong>
+            <a href="https://quarantine.tu-berlin.de" target="_blank" rel="noopener">
+                Check your TU Berlin quarantine system
+            </a>
+            to find and release the verification email.
+        </p>
+    </div>
 
     <form method="get" action="" role="search">
         <input
@@ -21,6 +40,9 @@
         <option value="name" {% if sort == "name" %}selected{% endif %}>Name (A→Z)</option>
         <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
         <option value="rating_asc" {% if sort == "rating_asc" %}selected{% endif %}>Lowest rated</option>
+        {% if user.is_authenticated %}
+        <option value="personal" {% if sort == "personal" %}selected{% endif %}>My Personal Rating</option>
+        {% endif %}
         </select>
         <button type="submit">Search</button>
     </form>

@@ -1,0 +1,123 @@
+{% extends "allauth/layouts/base.html" %}
+{% block title %}Flag Rating - {{course.name}}{% endblock %}
+
+{% block extra_head %}
+<style>
+.rating-preview {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #007bff;
+}
+
+.rating-preview h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.rating-preview .rating-value {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 1.2rem;
+}
+
+.rating-preview .comment {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #666;
+}
+
+.flag-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.flag-reason {
+    margin-bottom: 2rem;
+}
+
+.flag-reason label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.flag-reason textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.flag-reason textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-start;
+    margin-top: 2rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.back-link {
+    margin-bottom: 2rem;
+    display: inline-block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav>
+        <ul>
+            <li><a href="{% url 'course_detail' course.slug %}" class="back-link">← Back to {{ course.name }}</a></li>
+        </ul>
+    </nav>
+
+    <h1>Flag Inappropriate Rating</h1>
+    
+    <div class="rating-preview">
+        <h4>Rating being flagged:</h4>
+        <div class="rating-value">{{ rating.rating }}/5</div>
+        <div>{{ rating.year }} {{ rating.semester }}</div>
+        {% if rating.comment %}
+            <div class="comment">"{{ rating.comment|truncatewords:30 }}"</div>
+        {% endif %}
+    </div>
+    
+    <div class="flag-form">
+        <form method="post">
+            {% csrf_token %}
+            <div class="flag-reason">
+                <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+                {{ form.reason }}
+                <div class="help-text">{{ form.reason.help_text }}</div>
+                {% if form.reason.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.reason.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'course_detail' course.slug %}" class="secondary">Cancel</a>
+                <button type="submit" class="contrast">Flag Rating</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

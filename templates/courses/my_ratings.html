@@ -1,5 +1,190 @@
 {% extends "allauth/layouts/base.html" %}
 {% block title %}My Ratings{% endblock %}
+{% block extra_head %}
+<style>
+/* Star Rating Display Styles */
+.star-rating-display {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0.5rem 0;
+}
+
+.star-rating-display .star {
+    font-size: 1.2rem;
+    color: #ddd;
+}
+
+.star-rating-display .star.filled {
+    color: #ffc107;
+}
+
+.rating-item {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.rating-item h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.rating-value {
+    font-weight: bold;
+    color: #333;
+    margin-left: 0.5rem;
+}
+
+.percentage-display {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff;
+    text-align: center;
+    margin: 0.5rem 0;
+}
+
+/* Individual Rating Review Styles */
+.rating-review {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.rating-header-with-comment {
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+.comment-section {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+
+.detailed-feedback {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #28a745;
+}
+
+.detailed-feedback h4 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: #333;
+    font-size: 1rem;
+}
+
+.feedback-item {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.feedback-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.feedback-item strong {
+    color: #495057;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+/* Detailed Feedback Accordion Styles */
+.detailed-feedback-accordion {
+    margin-top: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #f8f9fa;
+}
+
+.detailed-feedback-accordion summary {
+    padding: 0.75rem;
+    cursor: pointer;
+    font-weight: bold;
+    background: #e9ecef;
+    border-radius: 6px 6px 0 0;
+    transition: background-color 0.2s ease;
+    color: #495057;
+}
+
+.detailed-feedback-accordion summary:hover {
+    background: #dee2e6;
+}
+
+.detailed-feedback-accordion[open] summary {
+    border-radius: 6px 6px 0 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.detailed-feedback-accordion .detailed-feedback {
+    margin: 0;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 0 0 6px 6px;
+    border-left: none;
+}
+
+/* Action buttons styling */
+.rating-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.rating-actions a {
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.rating-actions a[role="button"] {
+    background: #007bff;
+    color: white;
+    border: none;
+}
+
+.rating-actions a[role="button"]:hover {
+    background: #0056b3;
+}
+
+.rating-actions a.secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.rating-actions a.secondary:hover {
+    background: #545b62;
+}
+
+.rating-actions a.outline {
+    background: transparent;
+    color: #007bff;
+    border: 1px solid #007bff;
+}
+
+.rating-actions a.outline:hover {
+    background: #007bff;
+    color: white;
+}
+</style>
+{% endblock %}
 {% block content %}
 <main class="container">
     <nav>
@@ -14,41 +199,107 @@
         <p>You have rated {{ ratings|length }} course{{ ratings|length|pluralize }}.</p>
         
         {% for rating in ratings %}
-        <article>
-            <header>
-                <hgroup>
-                    <h3>
-                        <a href="{% url 'course_detail' rating.course.slug %}">
-                            {{ rating.course.name }}
-                        </a>
-                    </h3>
-                    <p>
-                        {% for i in "12345" %}
-                            {% if forloop.counter <= rating.rating %}★{% else %}☆{% endif %}
-                        {% endfor %}
-                        {{ rating.rating }}/5
-                    </p>
-                </hgroup>
-            </header>
-            
-            <p>
-                <strong>{{ rating.year }} {{ rating.get_semester_display }}</strong> • 
-                Posted {{ rating.created_at|date:"F j, Y" }}
+        <div class="rating-review">
+            <div class="{% if rating.comment or rating.workload_text or rating.difficulty_text or rating.learning_gain_text or rating.teaching_quality_text or rating.assessment_fairness_text or rating.practical_theoretical_text or rating.relevance_text or rating.materials_text or rating.support_text or rating.organization_text %}rating-header-with-comment{% endif %}">
+                <h3>
+                    <a href="{% url 'course_detail' rating.course.slug %}">
+                        {{ rating.course.name }}
+                    </a>
+                </h3>
+                <div class="star-rating-display">
+                    {% for i in "12345" %}
+                        <span class="star {% if rating.rating >= i|add:0 %}filled{% endif %}">★</span>
+                    {% endfor %}
+                </div>
+                <p><span class="rating-value">{{ rating.rating }}/5</span> · {{ rating.year }} {{ rating.get_semester_display }}</p>
+                <p><small>Posted {{ rating.created_at|date:"Y-m-d" }}
                 {% if rating.updated_at != rating.created_at %}
-                    • Updated {{ rating.updated_at|date:"F j, Y" }}
-                {% endif %}
-            </p>
+                    • Updated {{ rating.updated_at|date:"Y-m-d" }}
+                {% endif %}</small></p>
+            </div>
             
+            <!-- Overall comment - only show if there's a comment -->
             {% if rating.comment %}
-            <blockquote>{{ rating.comment }}</blockquote>
+                <div class="comment-section">
+                    <strong>Overall Comment:</strong>
+                    <p>{{ rating.comment|linebreaksbr }}</p>
+                </div>
             {% endif %}
             
-            <footer>
+            <!-- Detailed rating texts - only show if there are any detailed texts -->
+            {% if rating.workload_text or rating.difficulty_text or rating.learning_gain_text or rating.teaching_quality_text or rating.assessment_fairness_text or rating.practical_theoretical_text or rating.relevance_text or rating.materials_text or rating.support_text or rating.organization_text %}
+                <details class="detailed-feedback-accordion">
+                    <summary><strong>Show Detailed Feedback</strong></summary>
+                    <div class="detailed-feedback">
+                        {% if rating.workload_text %}
+                            <div class="feedback-item">
+                                <strong>Workload:</strong> {{ rating.workload_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.difficulty_text %}
+                            <div class="feedback-item">
+                                <strong>Difficulty:</strong> {{ rating.difficulty_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.learning_gain_text %}
+                            <div class="feedback-item">
+                                <strong>Learning Gain:</strong> {{ rating.learning_gain_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.teaching_quality_text %}
+                            <div class="feedback-item">
+                                <strong>Teaching Quality:</strong> {{ rating.teaching_quality_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.assessment_fairness_text %}
+                            <div class="feedback-item">
+                                <strong>Assessment Fairness:</strong> {{ rating.assessment_fairness_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.practical_theoretical_text %}
+                            <div class="feedback-item">
+                                <strong>Practical/Theoretical Balance:</strong> {{ rating.practical_theoretical_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.relevance_text %}
+                            <div class="feedback-item">
+                                <strong>Relevance:</strong> {{ rating.relevance_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.materials_text %}
+                            <div class="feedback-item">
+                                <strong>Materials & Resources:</strong> {{ rating.materials_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.support_text %}
+                            <div class="feedback-item">
+                                <strong>Support & Responsiveness:</strong> {{ rating.support_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if rating.organization_text %}
+                            <div class="feedback-item">
+                                <strong>Course Organization:</strong> {{ rating.organization_text|linebreaksbr }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </details>
+            {% endif %}
+            
+            <div class="rating-actions">
                 <a href="{% url 'edit_rating' rating.id %}" role="button">Edit</a>
                 <a href="{% url 'delete_rating' rating.id %}" role="button" class="secondary">Delete</a>
                 <a href="{% url 'course_detail' rating.course.slug %}" role="button" class="outline">View Course</a>
-            </footer>
-        </article>
+            </div>
+        </div>
         {% endfor %}
     {% else %}
         <article>

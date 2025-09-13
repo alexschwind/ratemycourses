@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import reverse
-from .models import Course, Rating
+from django.utils.html import format_html
+from .models import Course, Rating, RatingFlag
 
 class RatingInline(admin.TabularInline):  # or admin.StackedInline if you prefer
     model = Rating
@@ -35,7 +36,48 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(Rating)
 class RatingAdmin(admin.ModelAdmin):
-    list_display = ("course", "user", "rating", "year", "semester", "created_at")
-    list_filter = ("rating", "year", "semester")
+    list_display = ("course", "user", "rating", "year", "semester", "is_disabled", "created_at", "flag_count")
+    list_filter = ("rating", "year", "semester", "is_disabled")
     search_fields = ("course__name", "user__email", "comment")
     autocomplete_fields = ("course", "user")
+    actions = ["disable_ratings", "enable_ratings"]
+    
+    def flag_count(self, obj):
+        count = obj.flags.count()
+        if count > 0:
+            return format_html('<span style="color: red; font-weight: bold;">{} flag(s)</span>', count)
+        return "0"
+    flag_count.short_description = "Flags"
+    
+    def disable_ratings(self, request, queryset):
+        updated = queryset.update(is_disabled=True)
+        self.message_user(request, f"{updated} rating(s) disabled.")
+    disable_ratings.short_description = "Disable selected ratings"
+    
+    def enable_ratings(self, request, queryset):
+        updated = queryset.update(is_disabled=False)
+        self.message_user(request, f"{updated} rating(s) enabled.")
+    enable_ratings.short_description = "Enable selected ratings"
+
+
+@admin.register(RatingFlag)
+class RatingFlagAdmin(admin.ModelAdmin):
+    list_display = ("rating", "flagged_by", "created_at", "rating_course")
+    list_filter = ("created_at",)
+    search_fields = ("rating__course__name", "flagged_by__email", "reason")
+    readonly_fields = ("created_at",)
+    autocomplete_fields = ("rating", "flagged_by")
+    
+    fieldsets = (
+        ("Flag Details", {
+            "fields": ("rating", "flagged_by", "reason")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at",),
+            "classes": ("collapse",)
+        }),
+    )
+    
+    def rating_course(self, obj):
+        return obj.rating.course.name
+    rating_course.short_description = "Course"

@@ -1,0 +1,227 @@
+{% extends "allauth/layouts/base.html" %}
+{% load allauth %}
+{% block title %}Edit Profile Weights{% endblock %}
+{% block content %}
+<main class="container">
+    <h1>Edit Rating Weights</h1>
+    
+    <p>Configure how important each rating dimension is to you. These weights will be used to calculate your personal course ratings and affect how courses are sorted for you.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {% if field.name == 'practical_theoretical_preference' %}
+                        <span class="preference-value" id="value-{{ field.name }}">{{ field.value|default:50 }}%</span>
+                    {% else %}
+                        <span class="importance-value" id="value-{{ field.name }}">{{ field.value|default:3 }}</span>
+                    {% endif %}
+                </label>
+                {{ field }}
+                {% if field.name == 'practical_theoretical_preference' %}
+                    <div class="preference-labels">
+                        <span class="preference-label">Very Theoretical</span>
+                        <span class="preference-label">Very Practical</span>
+                    </div>
+                {% else %}
+                    <div class="importance-labels">
+                        <span class="importance-label">Not Important</span>
+                        <span class="importance-label">Extremely Important</span>
+                    </div>
+                {% endif %}
+                {% if field.help_text %}
+                    <small class="form-text">{{ field.help_text }}</small>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="alert alert-error">
+                        {{ field.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Weights</button>
+            <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+    
+    <div class="mt-4">
+        <h3>How It Works</h3>
+        <ul>
+            <li>Rate each dimension from "Not Important" to "Extremely Important"</li>
+            <li>Weights are automatically calculated behind the scenes (0% to 80%)</li>
+            <li>For Practical ↔ Theoretical Balance: Set your preference from "Very Theoretical" to "Very Practical"</li>
+            <li>Courses will be rated higher if their practical/theoretical balance matches your preference</li>
+            <li>Your personal course ratings will be calculated using these weights and preferences</li>
+            <li>Courses can be sorted by your personal weighted ratings</li>
+        </ul>
+    </div>
+</main>
+
+<style>
+.importance-value {
+    float: right;
+    font-weight: bold;
+    color: #007bff;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    min-width: 2rem;
+    text-align: center;
+}
+
+.importance-slider {
+    width: 100%;
+    margin: 0.5rem 0;
+}
+
+.importance-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.importance-label {
+    font-size: 0.75rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.form-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.importance-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.importance-scale span {
+    text-align: center;
+    flex: 1;
+}
+
+.preference-value {
+    float: right;
+    font-weight: bold;
+    color: #28a745;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    min-width: 3rem;
+    text-align: center;
+}
+
+.preference-slider {
+    width: 100%;
+    margin: 0.5rem 0;
+}
+
+.preference-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.preference-label {
+    font-size: 0.75rem;
+}
+</style>
+
+<script>
+// Add some JavaScript to show importance values and convert to weights
+document.addEventListener('DOMContentLoaded', function() {
+    const importanceSliders = document.querySelectorAll('.importance-slider');
+    const preferenceSliders = document.querySelectorAll('.preference-slider');
+    
+    // Importance to weight mapping
+    const importanceToWeight = {
+        1: 0,    // Not Important -> 0%
+        2: 10,   // Slightly Important -> 10%
+        3: 20,   // Moderately Important -> 20%
+        4: 50,   // Very Important -> 50%
+        5: 80,   // Extremely Important -> 80%
+    };
+    
+    // Importance labels
+    const importanceLabels = {
+        1: 'Not Important',
+        2: 'Slightly Important', 
+        3: 'Moderately Important',
+        4: 'Very Important',
+        5: 'Extremely Important'
+    };
+    
+    function updateValues() {
+        let totalWeight = 0;
+        
+        // Handle importance sliders
+        importanceSliders.forEach(slider => {
+            const importanceValue = parseInt(slider.value) || 3;
+            const weight = importanceToWeight[importanceValue];
+            totalWeight += weight;
+            
+            // Update individual value display
+            const valueSpan = document.getElementById('value-' + slider.name);
+            if (valueSpan) {
+                valueSpan.textContent = importanceValue;
+                valueSpan.title = importanceLabels[importanceValue] + ' (' + weight + '% weight)';
+            }
+        });
+        
+        // Handle preference sliders
+        preferenceSliders.forEach(slider => {
+            const preferenceValue = parseInt(slider.value) || 50;
+            
+            // Update individual value display
+            const valueSpan = document.getElementById('value-' + slider.name);
+            if (valueSpan) {
+                valueSpan.textContent = preferenceValue + '%';
+                valueSpan.title = 'Your preference: ' + preferenceValue + '% practical';
+            }
+        });
+    }
+    
+    // Add event listeners
+    importanceSliders.forEach(slider => {
+        slider.addEventListener('input', updateValues);
+    });
+    
+    preferenceSliders.forEach(slider => {
+        slider.addEventListener('input', updateValues);
+    });
+    
+    // Initial calculation
+    updateValues();
+});
+</script>
+{% endblock content %}

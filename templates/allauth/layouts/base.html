@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load static %}
 <!DOCTYPE html>
 <html>
     <head>
@@ -9,7 +10,55 @@
             {% block head_title %}
             {% endblock head_title %}
         </title>
+        <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.colors.min.css">
+        <style>
+            /* Custom message styling for better visibility */
+            #messages-container .alert {
+                margin-bottom: 1rem;
+                border-radius: var(--pico-border-radius);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                padding: 1rem;
+            }
+            
+            /* Success messages */
+            #messages-container .alert-success {
+                background-color: var(--pico-color-green-50);
+                border-left: 4px solid var(--pico-color-green-500);
+                color: var(--pico-color-green-900);
+            }
+            
+            /* Error messages */
+            #messages-container .alert-error,
+            #messages-container .alert-danger {
+                background-color: var(--pico-color-red-50);
+                border-left: 4px solid var(--pico-color-red-500);
+                color: var(--pico-color-red-900);
+            }
+            
+            /* Warning messages */
+            #messages-container .alert-warning {
+                background-color: var(--pico-color-yellow-50);
+                border-left: 4px solid var(--pico-color-yellow-500);
+                color: var(--pico-color-yellow-900);
+            }
+            
+            /* Info messages */
+            #messages-container .alert-info,
+            #messages-container .alert-debug {
+                background-color: var(--pico-color-blue-50);
+                border-left: 4px solid var(--pico-color-blue-500);
+                color: var(--pico-color-blue-900);
+            }
+            
+            /* Default fallback for unknown message types */
+            #messages-container .alert:not(.alert-success):not(.alert-error):not(.alert-danger):not(.alert-warning):not(.alert-info):not(.alert-debug) {
+                background-color: var(--pico-color-gray-50);
+                border-left: 4px solid var(--pico-color-gray-500);
+                color: var(--pico-color-gray-900);
+            }
+        </style>
         {% block extra_head %}
         {% endblock extra_head %}
     </head>
@@ -18,7 +67,12 @@
         <header class="container-fluid">
             <nav>
                 <ul>
-                    <li><strong><a href="{% url 'home' %}">Home</a></strong></li>
+                    <li>
+                        <a href="{% url 'home' %}" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <img src="{% static 'images/logo.png' %}" alt="RateMyCourses Logo" style="height: 32px; width: auto;">
+                            <strong>RateMyCourses</strong>
+                        </a>
+                    </li>
                 </ul>
                 <ul>
                     {% if user.is_authenticated %}
@@ -59,11 +113,12 @@
         </header>
         <main class="container-fluid">
             {% if messages %}
-                <div>
-                    <strong>{% trans "Messages:" %}</strong>
-                    <ul>
-                        {% for message in messages %}<li>{{ message }}</li>{% endfor %}
-                    </ul>
+                <div id="messages-container">
+                    {% for message in messages %}
+                        <article class="alert alert-{{ message.tags|default:'info' }}" role="alert" data-message-id="{{ forloop.counter }}">
+                            {{ message }}
+                        </article>
+                    {% endfor %}
                 </div>
             {% endif %}
             {% block content %}
@@ -85,6 +140,21 @@
         </footer>
         {% endblock body %}
         {% block extra_body %}
+        <script>
+            // Auto-hide messages after 2 seconds
+            document.addEventListener('DOMContentLoaded', function() {
+                const messages = document.querySelectorAll('#messages-container .alert');
+                messages.forEach(function(message) {
+                    setTimeout(function() {
+                        message.style.transition = 'opacity 1s ease-out';
+                        message.style.opacity = '0';
+                        setTimeout(function() {
+                            message.remove();
+                        }, 1000); // Wait for fade out animation to complete
+                    }, 3000); // Hide after 3 seconds
+                });
+            });
+        </script>
         {% endblock extra_body %}
     </body>
 </html>

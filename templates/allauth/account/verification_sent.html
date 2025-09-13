@@ -1,0 +1,30 @@
+{% extends "allauth/layouts/entrance.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Verify Your Email Address" %}{% endblock head_title %}
+
+{% block content %}
+    <hgroup>
+        <h1>{% trans "Verify Your Email Address" %}</h1>
+        <p>{% trans "We have sent an email to you for verification. Follow the link provided to finalize the signup process. If you do not see the verification email in your main inbox, check your spam folder. Please contact us if you do not receive the verification email within a few minutes." %}</p>
+    </hgroup>
+
+    <div class="alert" style="margin-top: 2rem;">
+        <h4>{% trans "Can't find the verification email?" %}</h4>
+        <p>{% trans "If you don't see the verification email in your inbox, it might have been caught by your university's spam filter." %}</p>
+        <p>
+            <strong>{% trans "TU Berlin students:" %}</strong>
+            <a href="https://quarantine.tu-berlin.de" target="_blank" rel="noopener">
+                {% trans "Check your TU Berlin quarantine system" %}
+            </a>
+            {% trans "to find and release the verification email." %}
+        </p>
+    </div>
+
+    {% if ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND %}
+        <form method="post" action="{% url 'account_resend_email' %}" style="margin-top: 2rem;">
+            {% csrf_token %}
+            <button type="submit" class="secondary">{% trans "Resend verification email" %}</button>
+        </form>
+    {% endif %}
+{% endblock content %}

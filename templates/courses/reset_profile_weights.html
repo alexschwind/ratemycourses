@@ -1,0 +1,31 @@
+{% extends "allauth/layouts/base.html" %}
+{% load allauth %}
+{% block title %}Reset Profile Weights{% endblock %}
+{% block content %}
+<main class="container">
+    <h1>Reset Profile Weights</h1>
+    
+    <div class="alert alert-warning">
+        <strong>Warning:</strong> This will reset all your rating dimension weights to their default values (20% each).
+    </div>
+    
+    <p>Are you sure you want to reset your profile weights? This action cannot be undone.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Yes, Reset Weights</button>
+            <a href="{% url 'edit_profile' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+    
+    <div class="mt-4">
+        <h3>What will happen:</h3>
+        <ul>
+            <li>All dimension weights will be set to 20% (equal weighting)</li>
+            <li>Your personal course ratings will be recalculated</li>
+            <li>Course sorting by personal ratings will be affected</li>
+        </ul>
+    </div>
+</main>
+{% endblock content %}

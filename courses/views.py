@@ -40,7 +40,7 @@ class CourseListView(ListView):
 
     def get_queryset(self):
         q = (self.request.GET.get("q") or "").strip()
-        sort = (self.request.GET.get("sort") or "name").lower()
+        sort = (self.request.GET.get("sort") or "rating").lower()
         faculty_filter = (self.request.GET.get("faculty") or "").strip()
         fachgebiet_filter = (self.request.GET.get("fachgebiet") or "").strip()
         professor_filter = (self.request.GET.get("professor") or "").strip()
@@ -95,7 +95,7 @@ class CourseListView(ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["q"] = (self.request.GET.get("q") or "").strip()
-        ctx["sort"] = (self.request.GET.get("sort") or "name").lower()
+        ctx["sort"] = (self.request.GET.get("sort") or "rating").lower()
         ctx["faculty_filter"] = (self.request.GET.get("faculty") or "").strip()
         ctx["fachgebiet_filter"] = (self.request.GET.get("fachgebiet") or "").strip()
         ctx["professor_filter"] = (self.request.GET.get("professor") or "").strip()
@@ -176,17 +176,17 @@ def add_rating(request, slug):
                         existing_rating.comment = data["comment"]
                         existing_rating.year = data["year"]
                         existing_rating.semester = data["semester"]
-                        # Update detailed ratings
-                        existing_rating.workload_rating = data.get("workload_rating")
-                        existing_rating.difficulty_rating = data.get("difficulty_rating")
-                        existing_rating.learning_gain_rating = data.get("learning_gain_rating")
-                        existing_rating.teaching_quality_rating = data.get("teaching_quality_rating")
-                        existing_rating.assessment_fairness_rating = data.get("assessment_fairness_rating")
-                        existing_rating.practical_theoretical_balance = data.get("practical_theoretical_balance")
-                        existing_rating.relevance_rating = data.get("relevance_rating")
-                        existing_rating.materials_rating = data.get("materials_rating")
-                        existing_rating.support_rating = data.get("support_rating")
-                        existing_rating.organization_rating = data.get("organization_rating")
+                        # Update detailed ratings - convert empty strings to None for integer fields
+                        existing_rating.workload_rating = data.get("workload_rating") or None
+                        existing_rating.difficulty_rating = data.get("difficulty_rating") or None
+                        existing_rating.learning_gain_rating = data.get("learning_gain_rating") or None
+                        existing_rating.teaching_quality_rating = data.get("teaching_quality_rating") or None
+                        existing_rating.assessment_fairness_rating = data.get("assessment_fairness_rating") or None
+                        existing_rating.practical_theoretical_balance = data.get("practical_theoretical_balance") or None
+                        existing_rating.relevance_rating = data.get("relevance_rating") or None
+                        existing_rating.materials_rating = data.get("materials_rating") or None
+                        existing_rating.support_rating = data.get("support_rating") or None
+                        existing_rating.organization_rating = data.get("organization_rating") or None
                         # Update text fields
                         existing_rating.workload_text = data.get("workload_text", "")
                         existing_rating.difficulty_text = data.get("difficulty_text", "")
@@ -209,17 +209,17 @@ def add_rating(request, slug):
                             comment=data["comment"],
                             year=data["year"],
                             semester=data["semester"],
-                            # Detailed ratings
-                            workload_rating=data.get("workload_rating"),
-                            difficulty_rating=data.get("difficulty_rating"),
-                            learning_gain_rating=data.get("learning_gain_rating"),
-                            teaching_quality_rating=data.get("teaching_quality_rating"),
-                            assessment_fairness_rating=data.get("assessment_fairness_rating"),
-                            practical_theoretical_balance=data.get("practical_theoretical_balance"),
-                            relevance_rating=data.get("relevance_rating"),
-                            materials_rating=data.get("materials_rating"),
-                            support_rating=data.get("support_rating"),
-                            organization_rating=data.get("organization_rating"),
+                            # Detailed ratings - convert empty strings to None for integer fields
+                            workload_rating=data.get("workload_rating") or None,
+                            difficulty_rating=data.get("difficulty_rating") or None,
+                            learning_gain_rating=data.get("learning_gain_rating") or None,
+                            teaching_quality_rating=data.get("teaching_quality_rating") or None,
+                            assessment_fairness_rating=data.get("assessment_fairness_rating") or None,
+                            practical_theoretical_balance=data.get("practical_theoretical_balance") or None,
+                            relevance_rating=data.get("relevance_rating") or None,
+                            materials_rating=data.get("materials_rating") or None,
+                            support_rating=data.get("support_rating") or None,
+                            organization_rating=data.get("organization_rating") or None,
                             # Text fields
                             workload_text=data.get("workload_text", ""),
                             difficulty_text=data.get("difficulty_text", ""),
@@ -356,23 +356,26 @@ def upload_courses_csv(request):
                             
                             if faculty_name:
                                 faculty_obj, _ = Faculty.objects.get_or_create(
-                                    name=faculty_name,
-                                    defaults={'code': faculty_name[:10].upper()}
+                                    name=faculty_name
                                 )
                             
                             if institute_name:
                                 # If we have a faculty, use it; otherwise create a default one
-                                if not faculty_obj and faculty_name:
-                                    faculty_obj, _ = Faculty.objects.get_or_create(
-                                        name=faculty_name,
-                                        defaults={'code': faculty_name[:10].upper()}
-                                    )
+                                if not faculty_obj:
+                                    if faculty_name:
+                                        faculty_obj, _ = Faculty.objects.get_or_create(
+                                            name=faculty_name
+                                        )
+                                    else:
+                                        # Create a default faculty if no faculty name provided
+                                        faculty_obj, _ = Faculty.objects.get_or_create(
+                                            name='Unknown Faculty'
+                                        )
                                 
                                 institute_obj, _ = Institute.objects.get_or_create(
                                     name=institute_name,
                                     defaults={
-                                        'faculty': faculty_obj,
-                                        'code': institute_name[:20].upper()
+                                        'faculty': faculty_obj
                                     }
                                 )
                             
@@ -382,14 +385,12 @@ def upload_courses_csv(request):
                                     # Create a default institute if none exists
                                     if not faculty_obj:
                                         faculty_obj, _ = Faculty.objects.get_or_create(
-                                            name='Unknown Faculty',
-                                            defaults={'code': 'UNK'}
+                                            name='Unknown Faculty'
                                         )
                                     institute_obj, _ = Institute.objects.get_or_create(
                                         name='Unknown Institute',
                                         defaults={
-                                            'faculty': faculty_obj,
-                                            'code': 'UNK'
+                                            'faculty': faculty_obj
                                         }
                                     )
                                 
@@ -479,17 +480,17 @@ def edit_rating(request, rating_id):
             rating.comment = data["comment"]
             rating.year = data["year"]
             rating.semester = data["semester"]
-            # Update detailed ratings
-            rating.workload_rating = data.get("workload_rating")
-            rating.difficulty_rating = data.get("difficulty_rating")
-            rating.learning_gain_rating = data.get("learning_gain_rating")
-            rating.teaching_quality_rating = data.get("teaching_quality_rating")
-            rating.assessment_fairness_rating = data.get("assessment_fairness_rating")
-            rating.practical_theoretical_balance = data.get("practical_theoretical_balance")
-            rating.relevance_rating = data.get("relevance_rating")
-            rating.materials_rating = data.get("materials_rating")
-            rating.support_rating = data.get("support_rating")
-            rating.organization_rating = data.get("organization_rating")
+            # Update detailed ratings - convert empty strings to None for integer fields
+            rating.workload_rating = data.get("workload_rating") or None
+            rating.difficulty_rating = data.get("difficulty_rating") or None
+            rating.learning_gain_rating = data.get("learning_gain_rating") or None
+            rating.teaching_quality_rating = data.get("teaching_quality_rating") or None
+            rating.assessment_fairness_rating = data.get("assessment_fairness_rating") or None
+            rating.practical_theoretical_balance = data.get("practical_theoretical_balance") or None
+            rating.relevance_rating = data.get("relevance_rating") or None
+            rating.materials_rating = data.get("materials_rating") or None
+            rating.support_rating = data.get("support_rating") or None
+            rating.organization_rating = data.get("organization_rating") or None
             # Update text fields
             rating.workload_text = data.get("workload_text", "")
             rating.difficulty_text = data.get("difficulty_text", "")

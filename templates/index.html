@@ -73,8 +73,8 @@
             </div>
             <div>
                 <select name="sort" aria-label="Sort courses">
-                <option value="name" {% if sort == "name" %}selected{% endif %}>Name (A→Z)</option>
                 <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
+                <option value="name" {% if sort == "name" %}selected{% endif %}>Name (A→Z)</option>
                 <option value="rating_asc" {% if sort == "rating_asc" %}selected{% endif %}>Lowest rated</option>
                 {% if user.is_authenticated %}
                 <option value="personal" {% if sort == "personal" %}selected{% endif %}>My Personal Rating</option>
@@ -99,10 +99,8 @@
         <thead>
             <tr>
             <th style="text-align:left;">Course</th>
-            <th style="text-align:left;">Faculty</th>
-            <th style="text-align:left;">Subject Area</th>
+            <th style="text-align:left;">Fachgebiet</th>
             <th style="text-align:left;">Professor</th>
-            <th style="text-align:left;">Institute</th>
             <th style="text-align:center;">Average rating</th>
             <th style="text-align:center;"># Ratings</th>
             </tr>
@@ -114,16 +112,10 @@
                 <a href="{% url 'course_detail' course.slug %}">{{ course.name }}</a>
                 </td>
                 <td>
-                {% if course.faculty %}{{ course.faculty.name }}{% else %}—{% endif %}
-                </td>
-                <td>
                 {% if course.fachgebiet %}{{ course.fachgebiet.name }}{% else %}—{% endif %}
                 </td>
                 <td>
                 {% if course.fachgebiet %}{{ course.fachgebiet.professor }}{% else %}—{% endif %}
-                </td>
-                <td>
-                {% if course.institute %}{{ course.institute.name }}{% else %}—{% endif %}
                 </td>
                 <td style="text-align:center;">
                 {% if course.rating_count %}

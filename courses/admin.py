@@ -25,35 +25,22 @@ class RatingInline(admin.TabularInline):  # or admin.StackedInline if you prefer
 
 @admin.register(Faculty)
 class FacultyAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "course_count")
-    search_fields = ("name", "code")
-    readonly_fields = ("code",)
-    
-    def course_count(self, obj):
-        return obj.courses.count()
-    course_count.short_description = "Courses"
+    list_display = ("name", )
+    search_fields = ("name",)
 
 @admin.register(Institute)
 class InstituteAdmin(admin.ModelAdmin):
-    list_display = ("name", "faculty", "code", "course_count")
+    list_display = ("name", "faculty")
     list_filter = ("faculty",)
-    search_fields = ("name", "code", "faculty__name")
+    search_fields = ("name", "faculty__name")
     autocomplete_fields = ("faculty",)
-    
-    def course_count(self, obj):
-        return obj.courses.count()
-    course_count.short_description = "Courses"
 
 @admin.register(Fachgebiet)
 class FachgebietAdmin(admin.ModelAdmin):
-    list_display = ("name", "professor", "institute", "course_count")
+    list_display = ("name", "professor", "institute")
     list_filter = ("institute__faculty", "institute")
     search_fields = ("name", "professor", "institute__name")
     autocomplete_fields = ("institute",)
-    
-    def course_count(self, obj):
-        return obj.courses.count()
-    course_count.short_description = "Courses"
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):

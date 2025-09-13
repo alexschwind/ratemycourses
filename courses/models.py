@@ -15,8 +15,6 @@ SEMESTER_CHOICES = [
 class Faculty(models.Model):
     """Model for university faculties"""
     name = models.CharField(max_length=255, unique=True)
-    code = models.CharField(max_length=10, unique=True, help_text="Short code for the faculty (e.g., 'CS', 'MATH')")
-    description = models.TextField(blank=True, help_text="Optional description of the faculty")
     
     class Meta:
         ordering = ["name"]
@@ -29,8 +27,6 @@ class Institute(models.Model):
     """Model for institutes within faculties"""
     name = models.CharField(max_length=255, unique=True)
     faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE, related_name="institutes")
-    code = models.CharField(max_length=20, unique=True, help_text="Short code for the institute")
-    description = models.TextField(blank=True, help_text="Optional description of the institute")
     
     class Meta:
         ordering = ["faculty__name", "name"]
@@ -43,7 +39,6 @@ class Fachgebiet(models.Model):
     name = models.CharField(max_length=255, unique=True, help_text="Subject area name (e.g., Algorithms, Statistics)")
     professor = models.CharField(max_length=255, help_text="Professor or instructor name")
     institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name="fachgebiete")
-    description = models.TextField(blank=True, help_text="Optional description of the subject area")
     
     class Meta:
         ordering = ["institute__faculty__name", "institute__name", "name"]

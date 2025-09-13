@@ -4,6 +4,10 @@
 {% block content %}
 <main class="container">
     <h1>Profile</h1>
+    <p>
+        Welcome, {{ user.get_full_name|default:user.username }}!<br>
+        <small>Email Address: {{ user.email }}</small>
+    </p>
     
     <article>
         <header>

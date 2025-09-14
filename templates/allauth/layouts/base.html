@@ -77,9 +77,6 @@
                 <ul>
                     {% if user.is_authenticated %}
                         <li>
-                            <strong>Welcome, {{ user.get_full_name|default:user.username }}!</strong>
-                        </li>
-                        <li>
                             <a href="{% url 'profile' %}">{% trans "Profile" %}</a>
                         </li>
                         {% url 'account_logout' as logout_url_ %}

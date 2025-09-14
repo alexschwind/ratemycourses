@@ -100,6 +100,7 @@
     {% endif %}
 
     {% if courses %}
+        <div class="overflow-auto">
         <table>
         <thead>
             <tr>
@@ -136,6 +137,7 @@
             {% endfor %}
         </tbody>
         </table>
+        </div>
     {% else %}
         <p>No courses found.</p>
     {% endif %}

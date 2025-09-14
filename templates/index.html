@@ -28,48 +28,15 @@
         </p>
     </div>
 
-    <form method="get" action="" role="search">
-        <div class="grid">
+    <form method="get" action="">
+        <fieldset class="grid">
             <div>
-                <input
-                type="search"
+                <input type="search"
                 name="q"
                 placeholder="Search courses…"
                 value="{{ q }}"
                 aria-label="Search courses"
                 />
-            </div>
-            <div>
-                <select name="faculty" aria-label="Filter by faculty">
-                    <option value="">All Faculties</option>
-                    {% for faculty in faculties %}
-                    <option value="{{ faculty }}" {% if faculty_filter == faculty %}selected{% endif %}>{{ faculty }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <select name="fachgebiet" aria-label="Filter by subject area">
-                    <option value="">All Subject Areas</option>
-                    {% for fachgebiet in fachgebiete %}
-                    <option value="{{ fachgebiet }}" {% if fachgebiet_filter == fachgebiet %}selected{% endif %}>{{ fachgebiet }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <select name="professor" aria-label="Filter by professor">
-                    <option value="">All Professors</option>
-                    {% for professor in professors %}
-                    <option value="{{ professor }}" {% if professor_filter == professor %}selected{% endif %}>{{ professor }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <select name="institut" aria-label="Filter by institute">
-                    <option value="">All Institutes</option>
-                    {% for institut in institute %}
-                    <option value="{{ institut }}" {% if institut_filter == institut %}selected{% endif %}>{{ institut }}</option>
-                    {% endfor %}
-                </select>
             </div>
             <div>
                 <select name="sort" aria-label="Sort courses">
@@ -84,7 +51,45 @@
             <div>
                 <button type="submit">Search</button>
             </div>
-        </div>
+        </fieldset>
+        
+        <details>
+            <summary>Advanced Filters</summary>
+            <fieldset class="grid">
+                <div>
+                    <select name="faculty" aria-label="Filter by faculty">
+                        <option value="">All Faculties</option>
+                        {% for faculty in faculties %}
+                        <option value="{{ faculty }}" {% if faculty_filter == faculty %}selected{% endif %}>{{ faculty }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <select name="fachgebiet" aria-label="Filter by subject area">
+                        <option value="">All Subject Areas</option>
+                        {% for fachgebiet in fachgebiete %}
+                        <option value="{{ fachgebiet }}" {% if fachgebiet_filter == fachgebiet %}selected{% endif %}>{{ fachgebiet }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <select name="professor" aria-label="Filter by professor">
+                        <option value="">All Professors</option>
+                        {% for professor in professors %}
+                        <option value="{{ professor }}" {% if professor_filter == professor %}selected{% endif %}>{{ professor }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <select name="institut" aria-label="Filter by institute">
+                        <option value="">All Institutes</option>
+                        {% for institut in institute %}
+                        <option value="{{ institut }}" {% if institut_filter == institut %}selected{% endif %}>{{ institut }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </fieldset>
+        </details>
     </form>
 
     {% if page_obj.paginator.count %}

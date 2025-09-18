@@ -5,28 +5,33 @@
         <h1>Courses</h1>
         <p>Welcome to the TU Berlin course ratings project.</p> 
     </hgroup>
+    
+    <details>
+        <summary>About this project & Important information</summary>
+        <div style="margin-top: 1rem;">
+            <p>Here you can check what courses are actually good and what other students think about it. You can log in with your TUB email address to write your own ratings.</p>
+            <p>Right now the project focuses on the courses of the Informatik Bachelor program and the Computer Science Master program.</p>
+            
+            {% if user.is_authenticated %}
+            <div class="alert alert-info" style="margin: 1.5rem 0;">
+                <h4>Personalized Course Ratings</h4>
+                <p>You can now customize how course ratings are weighted for your personal view! <a href="{% url 'edit_profile' %}">Set your preferences</a> to see courses sorted by what matters most to you.</p>
+            </div>
+            {% endif %}
+            
+            <div class="alert" style="margin: 1.5rem 0;">
+                <h4>Can't find your verification email?</h4>
+                <p>If you don't see the verification email in your inbox, it might have been caught by the TU's spam filter.</p>
+                <p><a href="https://quarantine.tu-berlin.de" target="_blank" rel="noopener">
+                        Check your TU Berlin quarantine system
+                    </a>
+                    to find and release the verification email.
+                </p>
+            </div>
+        </div>
+    </details>
+    
     <hr>
-    <p>Here you can check what courses are actually good and what other students think about it. You can log in with your TUB email address to write your own ratings.</p>
-    <p>Right now the project focuses on the courses of the Informatik Bachelor program and the Computer Science Master program.</p>
-    
-    {% if user.is_authenticated %}
-    <div class="alert alert-info" style="margin: 1.5rem 0;">
-        <h4>Personalized Course Ratings</h4>
-        <p>You can now customize how course ratings are weighted for your personal view! <a href="{% url 'edit_profile' %}">Set your preferences</a> to see courses sorted by what matters most to you.</p>
-    </div>
-    {% endif %}
-    
-    <div class="alert" style="margin: 1.5rem 0;">
-        <h4>Can't find your verification email?</h4>
-        <p>If you don't see the verification email in your inbox, it might have been caught by your university's spam filter.</p>
-        <p>
-            <strong>TU Berlin students:</strong>
-            <a href="https://quarantine.tu-berlin.de" target="_blank" rel="noopener">
-                Check your TU Berlin quarantine system
-            </a>
-            to find and release the verification email.
-        </p>
-    </div>
 
     <form method="get" action="">
         <fieldset class="grid">

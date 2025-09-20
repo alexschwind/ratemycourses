@@ -11,7 +11,7 @@
 
 .star-rating-display .star {
     font-size: 1.2rem;
-    color: #ddd;
+    color: var(--pico-muted-color);
 }
 
 .star-rating-display .star.filled {
@@ -21,28 +21,28 @@
 .rating-item {
     margin-bottom: 1.5rem;
     padding: 1rem;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--pico-muted-border-color);
     border-radius: 8px;
-    background: #fafafa;
+    background: var(--pico-background-color);
 }
 
 .rating-item h3 {
     margin-top: 0;
     margin-bottom: 0.5rem;
-    color: #333;
+    color: var(--pico-color);
     font-size: 1.1rem;
 }
 
 .rating-value {
     font-weight: bold;
-    color: #333;
+    color: var(--pico-color);
     margin-left: 0.5rem;
 }
 
 .percentage-display {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #007bff;
+    color: var(--pico-primary);
     text-align: center;
     margin: 0.5rem 0;
 }
@@ -51,13 +51,13 @@
 .rating-review {
     margin-bottom: 2rem;
     padding: 1rem;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--pico-muted-border-color);
     border-radius: 8px;
-    background: #fafafa;
+    background: var(--pico-background-color);
 }
 
 .rating-header-with-comment {
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--pico-muted-border-color);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
 }
@@ -65,30 +65,30 @@
 .comment-section {
     margin: 1rem 0;
     padding: 0.75rem;
-    background: #f8f9fa;
+    background: var(--pico-muted-background);
     border-radius: 4px;
-    border-left: 3px solid #007bff;
+    border-left: 3px solid var(--pico-primary);
 }
 
 .detailed-feedback {
     margin-top: 1rem;
     padding: 0.75rem;
-    background: #f8f9fa;
+    background: var(--pico-muted-background);
     border-radius: 4px;
-    border-left: 3px solid #28a745;
+    border-left: 3px solid var(--pico-color-green-500);
 }
 
 .detailed-feedback h4 {
     margin-top: 0;
     margin-bottom: 0.75rem;
-    color: #333;
+    color: var(--pico-color);
     font-size: 1rem;
 }
 
 .feedback-item {
     margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--pico-muted-border-color);
 }
 
 .feedback-item:last-child {
@@ -98,7 +98,7 @@
 }
 
 .feedback-item strong {
-    color: #495057;
+    color: var(--pico-muted-color);
     display: block;
     margin-bottom: 0.25rem;
 }
@@ -106,34 +106,34 @@
 /* Detailed Feedback Accordion Styles */
 .detailed-feedback-accordion {
     margin-top: 0.75rem;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--pico-muted-border-color);
     border-radius: 6px;
-    background: #f8f9fa;
+    background: var(--pico-muted-background);
 }
 
 .detailed-feedback-accordion summary {
     padding: 0.75rem;
     cursor: pointer;
     font-weight: bold;
-    background: #e9ecef;
+    background: var(--pico-muted-background);
     border-radius: 6px 6px 0 0;
     transition: background-color 0.2s ease;
-    color: #495057;
+    color: var(--pico-muted-color);
 }
 
 .detailed-feedback-accordion summary:hover {
-    background: #dee2e6;
+    background: var(--pico-muted-hover);
 }
 
 .detailed-feedback-accordion[open] summary {
     border-radius: 6px 6px 0 0;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--pico-muted-border-color);
 }
 
 .detailed-feedback-accordion .detailed-feedback {
     margin: 0;
     padding: 0.75rem;
-    background: #f8f9fa;
+    background: var(--pico-muted-background);
     border-radius: 0 0 6px 6px;
     border-left: none;
 }
@@ -155,33 +155,33 @@
 }
 
 .rating-actions a[role="button"] {
-    background: #007bff;
-    color: white;
+    background: var(--pico-primary);
+    color: var(--pico-primary-inverse);
     border: none;
 }
 
 .rating-actions a[role="button"]:hover {
-    background: #0056b3;
+    background: var(--pico-primary-hover);
 }
 
 .rating-actions a.secondary {
-    background: #6c757d;
-    color: white;
+    background: var(--pico-muted-color);
+    color: var(--pico-muted-inverse);
 }
 
 .rating-actions a.secondary:hover {
-    background: #545b62;
+    background: var(--pico-muted-hover);
 }
 
 .rating-actions a.outline {
     background: transparent;
-    color: #007bff;
-    border: 1px solid #007bff;
+    color: var(--pico-primary);
+    border: 1px solid var(--pico-primary);
 }
 
 .rating-actions a.outline:hover {
-    background: #007bff;
-    color: white;
+    background: var(--pico-primary);
+    color: var(--pico-primary-inverse);
 }
 </style>
 {% endblock %}

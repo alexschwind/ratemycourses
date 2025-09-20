@@ -4,29 +4,29 @@
 {% block extra_head %}
 <style>
 .rating-preview {
-    background: #f8f9fa;
+    background: var(--pico-muted-background);
     padding: 1rem;
     border-radius: 4px;
     margin-bottom: 2rem;
-    border-left: 4px solid #007bff;
+    border-left: 4px solid var(--pico-primary);
 }
 
 .rating-preview h4 {
     margin-top: 0;
     margin-bottom: 0.5rem;
-    color: #333;
+    color: var(--pico-color);
 }
 
 .rating-preview .rating-value {
     font-weight: bold;
-    color: #007bff;
+    color: var(--pico-primary);
     font-size: 1.2rem;
 }
 
 .rating-preview .comment {
     margin-top: 0.5rem;
     font-style: italic;
-    color: #666;
+    color: var(--pico-muted-color);
 }
 
 .flag-form {
@@ -48,7 +48,7 @@
     width: 100%;
     min-height: 120px;
     padding: 0.75rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--pico-muted-border-color);
     border-radius: 4px;
     font-family: inherit;
     resize: vertical;
@@ -56,8 +56,8 @@
 
 .flag-reason textarea:focus {
     outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    border-color: var(--pico-primary);
+    box-shadow: 0 0 0 2px var(--pico-primary-background);
 }
 
 .form-actions {
@@ -69,7 +69,7 @@
 
 .help-text {
     font-size: 0.875rem;
-    color: #6c757d;
+    color: var(--pico-muted-color);
     margin-top: 0.25rem;
 }
 
@@ -107,7 +107,7 @@
                 {{ form.reason }}
                 <div class="help-text">{{ form.reason.help_text }}</div>
                 {% if form.reason.errors %}
-                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                    <div style="color: var(--pico-color-red-500); font-size: 0.875rem; margin-top: 0.25rem;">
                         {{ form.reason.errors.0 }}
                     </div>
                 {% endif %}
